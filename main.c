@@ -20,9 +20,15 @@ static SDL_Surface *screen;
 #define SINKHEIGHT .3
 #define SINKHEIGHTTOP .3
 
+#define INRADIUS 220
+#define OUTRADIUS 230
+#define EYERADIUS 270
+#define RIDGEHEIGHT 20
+
 #define MAXBRICK 16
 
 static uint8_t eye_angle = 0;
+static int key_dx = 0;
 
 SDL_sem *semaphore;
 
@@ -106,6 +112,50 @@ void add_thing(int xpos, int ypos, int color) {
 	dest[2] = a[0] * b[1] - a[1] * b[0];
 }*/
 
+void ridge(int angstart, int angend) {
+	int i;
+
+	glNormal3d(0, 1, 0);
+	glBegin(GL_QUAD_STRIP);
+	for(i = angstart; i <= angend; i++) {
+		glVertex3d(
+			INRADIUS * cos(i * M_PI * 2 / 256),
+			RIDGEHEIGHT,
+			INRADIUS * sin(i * M_PI * 2 / 256));
+		glVertex3d(
+			OUTRADIUS * cos(i * M_PI * 2 / 256),
+			RIDGEHEIGHT,
+			OUTRADIUS * sin(i * M_PI * 2 / 256));
+	}
+	glEnd();
+	glBegin(GL_QUAD_STRIP);
+	for(i = angstart; i <= angend; i++) {
+		glNormal3d(cos(i * M_PI * 2 / 256), 0, sin(i * M_PI * 2 / 256));
+		glVertex3d(
+			OUTRADIUS * cos(i * M_PI * 2 / 256),
+			RIDGEHEIGHT,
+			OUTRADIUS * sin(i * M_PI * 2 / 256));
+		glVertex3d(
+			OUTRADIUS * cos(i * M_PI * 2 / 256),
+			0,
+			OUTRADIUS * sin(i * M_PI * 2 / 256));
+	}
+	glEnd();
+	/*glBegin(GL_QUAD_STRIP);
+	for(i = angstart; i <= angend; i++) {
+		glNormal3d(-cos(i * M_PI * 2 / 256), 0, -sin(i * M_PI * 2 / 256));
+		glVertex3d(
+			INRADIUS * cos(i * M_PI * 2 / 256),
+			RIDGEHEIGHT,
+			INRADIUS * sin(i * M_PI * 2 / 256));
+		glVertex3d(
+			INRADIUS * cos(i * M_PI * 2 / 256),
+			0,
+			INRADIUS * sin(i * M_PI * 2 / 256));
+	}
+	glEnd();*/
+}
+
 void drawframe() {
 	int x, y, i;
 	GLfloat light[4];
@@ -163,7 +213,7 @@ void drawframe() {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	gluLookAt(
-		170 * sin(eye_angle * M_PI * 2 / 256), 280, 170 * cos(eye_angle * M_PI * 2 / 256),
+		EYERADIUS * sin(eye_angle * M_PI * 2 / 256), 250, EYERADIUS * cos(eye_angle * M_PI * 2 / 256),
 		0, -100, 0,
 		0, 1, 0);
 
@@ -324,18 +374,33 @@ void drawframe() {
 		}
 	}
 	glEnd();
+
+	light[0] = .5;
+	light[1] = .5;
+	light[2] = .7;
+	light[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
+	ridge(-eye_angle - 10 + 64, -eye_angle + 10 + 64);
 }
 
-void handle_key(SDLKey key) {
+void handle_key(SDLKey key, int down) {
 	switch(key) {
 		case SDLK_q:
 			running = 0;
 			break;
 		case SDLK_h:
-			eye_angle -= 2;
+			if(down) {
+				key_dx = -1;
+			} else {
+				if(key_dx == -1) key_dx = 0;
+			}
 			break;
 		case SDLK_l:
-			eye_angle += 2;
+			if(down) {
+				key_dx = 1;
+			} else {
+				if(key_dx == 1) key_dx = 0;
+			}
 			break;
 		default:
 			break;
@@ -343,7 +408,7 @@ void handle_key(SDLKey key) {
 }
 
 void physics() {
-	//eye_angle++;
+	eye_angle += key_dx;
 }
 
 int main() {
@@ -374,7 +439,10 @@ int main() {
 		while(SDL_PollEvent(&event)) {
 			switch(event.type) {
 				case SDL_KEYDOWN:
-					handle_key(event.key.keysym.sym);
+					handle_key(event.key.keysym.sym, 1);
+					break;
+				case SDL_KEYUP:
+					handle_key(event.key.keysym.sym, 0);
 					break;
 				default:
 					break;
