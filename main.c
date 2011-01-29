@@ -8,8 +8,8 @@
 #include "ark.h"
 #include "render.h"
 
-#define INRADIUS 220
-#define OUTRADIUS 230
+#define INRADIUS 230
+#define OUTRADIUS 240
 #define EYERADIUS 270
 #define BALLRADIUS 6
 #define RIDGEHEIGHT 20
@@ -53,6 +53,7 @@ struct brick {
 int nbrick;
 
 #define BALLF_HELD		1
+#define BALLF_OUTSIDE		2
 
 #define BRICKF_LIVE		1
 
@@ -195,7 +196,7 @@ void draw_ball(struct ball *b) {
 		ypos -= SINKHEIGHT * worldmap[y + WORLDH / 2][x + WORLDW / 2].sinkage;
 	}
 	glTranslated(b->x, ypos, b->y);
-	gluSphere(ballquad, BALLRADIUS, 8, 8);
+	gluSphere(ballquad, BALLRADIUS, 7, 7);
 	glPopMatrix();
 }
 
@@ -538,6 +539,8 @@ void handle_key(SDLKey key, int down) {
 			for(i = 0; i < nball; i++) {
 				if(ball[i].flags & BALLF_HELD) {
 					ball[i].flags &= ~BALLF_HELD;
+					ball[i].x = (INRADIUS - BALLRADIUS) * cos((64 - eye_angle) * M_PI * 2 / 256);
+					ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
 					ball[i].dx = -ball[i].x / (INRADIUS - BALLRADIUS);
 					ball[i].dy = -ball[i].y / (INRADIUS - BALLRADIUS);
 				}
@@ -568,20 +571,20 @@ void removebrick(struct brick *b) {
 }
 
 void collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
+	int rm = 0;
+
 	if(ba->x >= br->x - 8 - WORLDW/2
 	&& ba->x <= br->x + 8 - WORLDW/2) {
 		if(ba->dy < 0
 		&& ba->y < (br->y + 8 - WORLDH/2)
 		&& prevy >= (br->y + 8 - WORLDH/2)) {
-			ba->dy = -ba->dy * 2;
-			removebrick(br);
-			return;
+			ba->dy = -ba->dy * 20;
+			rm = 1;
 		} else if(ba->dy > 0
 		&& ba->y > (br->y - 8 - WORLDH/2)
 		&& prevy <= (br->y - 8 - WORLDH/2)) {
-			ba->dy = -ba->dy * 2;
-			removebrick(br);
-			return;
+			ba->dy = -ba->dy * 20;
+			rm = 1;
 		}
 	}
 	if(ba->y >= br->y - 8 - WORLDH/2
@@ -589,15 +592,23 @@ void collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
 		if(ba->dx < 0
 		&& ba->x < (br->x + 8 - WORLDW/2)
 		&& prevx >= (br->x + 8 - WORLDH/2)) {
-			ba->dx = -ba->dx * 2;
-			removebrick(br);
+			ba->dx = -ba->dx * 20;
+			rm = 1;
 		} else if(ba->dx > 0
 		&& ba->x > (br->x - 8 - WORLDW/2)
 		&& prevx <= (br->x - 8 - WORLDW/2)) {
-			ba->dx = -ba->dx * 2;
-			removebrick(br);
+			ba->dx = -ba->dx * 20;
+			rm = 1;
 		}
 	}
+	if(rm) removebrick(br);
+}
+
+void rotate(double *xp, double *yp, double a) {
+	double x = *xp, y = *yp;
+
+	*xp = x * cos(a) - y * sin(a);
+	*yp = x * sin(a) + y * cos(a);
 }
 
 void physics() {
@@ -633,7 +644,28 @@ void physics() {
 			ball[i].y += ball[i].dy * BALLSPEED;
 			r = hypot(ball[i].x, ball[i].y);
 			if(r > INRADIUS) {
-				mirror(&ball[i].dx, &ball[i].dy, ball[i].x, ball[i].y);
+				if(ball[i].flags & BALLF_OUTSIDE) {
+					if(r > 2 * INRADIUS) {
+						ball[i].flags = BALLF_HELD;
+					}
+				} else {
+					double angle = atan2(ball[i].y, ball[i].x);
+					double paddle = (64 - eye_angle) * M_PI * 2 / 256;
+					double angdiff = angle - paddle;
+					if(angdiff > M_PI) angdiff -= M_PI * 2;
+					if(angdiff < -M_PI) angdiff += M_PI * 2;
+					if(angdiff > M_PI / 8
+					|| angdiff < -M_PI / 8) {
+						ball[i].flags |= BALLF_OUTSIDE;
+					} else {
+						double normx = ball[i].x;
+						double normy = ball[i].y;
+						rotate(&normx, &normy, -angdiff * 1);
+						mirror(&ball[i].dx, &ball[i].dy, normx, normy);
+						ball[i].x = prevx;
+						ball[i].y = prevy;
+					}
+				}
 			} else {
 				for(j = 0; j < nbrick; j++) {
 					if(brick[j].flags & BRICKF_LIVE) {

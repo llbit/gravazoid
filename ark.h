@@ -13,8 +13,8 @@
 #define SINKHEIGHT .3
 #define SINKHEIGHTTOP .3
 
-#define INRADIUS 220
-#define OUTRADIUS 230
+#define INRADIUS 230
+#define OUTRADIUS 240
 #define EYERADIUS 270
 #define RIDGEHEIGHT 20
 
