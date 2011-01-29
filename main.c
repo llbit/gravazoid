@@ -8,6 +8,7 @@
 #include "ark.h"
 #include "render.h"
 #include "text.h"
+#include "bigint.h"
 
 #define INRADIUS 250
 #define OUTRADIUS 255
@@ -58,8 +59,8 @@ SDL_sem *semaphore;
 
 GLUquadric *ballquad;
 
-static int bonus = 1;
-static int score = 0;
+static bigint_t* bonus;
+static bigint_t* score;
 
 int worldmap_valid;
 
@@ -108,7 +109,7 @@ void videosetup(int fullscreen) {
 	int w, h;
 
 	if(fullscreen) flags |= SDL_FULLSCREEN;
-	list = SDL_ListModes(0, flags | SDL_FULLSCREEN);
+	list = SDL_ListModes(0, flags);
 	if(!list) {
 		errx(1, "No usable video modes found");
 	} else if(list == (SDL_Rect **) -1) {
@@ -172,7 +173,7 @@ void resetlevel() {
 		}
 	}
 
-	score = 0;
+	bigint_set(score, 0);
 	lives = 5;
 
 	nball = 1;
@@ -541,9 +542,11 @@ void drawframe() {
 
 void draw_text() {
 	char buf[32];
+	char scorestr[32];
 	int i;
 
-	snprintf(buf, sizeof(buf), "Score: %d", score);
+	bigint_to_str(score, scorestr, sizeof(scorestr));
+	snprintf(buf, sizeof(buf), "Score: %s", scorestr);
 	draw_utf_str(font, buf, 2.f, 4.f);
 	snprintf(buf, sizeof(buf), "%3d fps", fps);
 	draw_utf_str(font, buf, 2.f, screen->h - 100);
@@ -622,8 +625,8 @@ void mirror(double *x1, double *y1, double x2, double y2) {
 void removebrick(struct brick *b) {
 	b->flags &= ~BRICKF_LIVE;
 	worldmap_valid = 0;
-	score += bonus;
-	bonus *= 2;
+	bigint_add(score, bonus, score);
+	bigint_add(bonus, bonus, bonus);
 }
 
 int collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
@@ -670,7 +673,7 @@ void rotate(double *xp, double *yp, double a) {
 
 void bonus_reset()
 {
-	bonus = 1;
+	bigint_set(bonus, 21349512);
 }
 
 void physics() {
@@ -759,6 +762,13 @@ void physics() {
 	}
 }
 
+void load_resources()
+{
+	font = load_font("testfont.ttf", 100.f, 3);
+	score = new_bigint(0);
+	bonus = new_bigint(21349512);
+}
+
 int main() {
 	int	time = 0;
 	int	frames = 0;
@@ -767,8 +777,9 @@ int main() {
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
 
-	font = load_font("testfont.ttf", 100.f, 3);
-	videosetup(0);
+	load_resources();
+
+	videosetup(1);
 	glsetup();
 
 	SDL_ShowCursor(SDL_DISABLE);
