@@ -22,7 +22,7 @@
 #define MEMBRANESTEP 7
 #define NBLUR 96
 
-#define MAX_PADDLE_VEL 100
+#define MAX_PADDLE_VEL 1000
 
 #define MAXBRICK 256
 #define MAXBALL 16
@@ -80,6 +80,7 @@ struct brick {
 	uint8_t		flags;
 } brick[MAXBRICK];
 int nbrick;
+int bricks_left;
 
 #define BALLF_HELD		1
 #define BALLF_OUTSIDE		2
@@ -160,7 +161,7 @@ void glsetup() {
 	ballquad = gluNewQuadric();
 }
 
-void resetlevel() {
+void resetlevel(int restart) {
 	int x, y;
 
 	srand(0);
@@ -172,9 +173,14 @@ void resetlevel() {
 			}
 		}
 	}
+	bricks_left = nbrick;
 
-	bigint_set(score, 0);
 	lives = 5;
+	if(restart) {
+		bigint_set(score, 0);
+		score = 0;
+		lives = 5;
+	}
 
 	nball = 1;
 	ball[0].flags = BALLF_HELD;
@@ -584,7 +590,7 @@ void handle_key(SDLKey key, int down) {
 			if(down) {
 				if(gameover) {
 					gameover = 0;
-					resetlevel();
+					resetlevel(1);
 				} else {
 					for(i = 0; i < nball; i++) {
 						if(ball[i].flags & BALLF_HELD) {
@@ -625,8 +631,17 @@ void mirror(double *x1, double *y1, double x2, double y2) {
 void removebrick(struct brick *b) {
 	b->flags &= ~BRICKF_LIVE;
 	worldmap_valid = 0;
+<<<<<<< HEAD:main.c
 	bigint_add(score, bonus, score);
 	bigint_add(bonus, bonus, bonus);
+=======
+	score += bonus;
+	bonus *= 2;
+	bricks_left--;
+	if(!bricks_left) {
+		resetlevel(0);
+	}
+>>>>>>> 76194be66743d5583e2abd14ba3a27e38c3f6ca1:main.c
 }
 
 int collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
@@ -681,9 +696,10 @@ void physics() {
 	double r, size;
 	double prevx, prevy;
 
-	paddle_vel = (paddle_vel + key_dx * MAX_PADDLE_VEL) / 2;
+	paddle_vel = (paddle_vel * .9 + key_dx * MAX_PADDLE_VEL * .1);
+	if(gameover) paddle_vel = (paddle_vel * .9 + 10);
 
-	eye_angle += paddle_vel * .01;
+	eye_angle += paddle_vel * .0018;
 	if(eye_angle >= 256) eye_angle -= 256;
 	if(eye_angle < 0) eye_angle += 256;
 
@@ -786,7 +802,7 @@ int main() {
 
 	physics();
 	millis = SDL_GetTicks();
-	resetlevel();
+	resetlevel(1);
 	nball = 0;
 
 	while(running) {
