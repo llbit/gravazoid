@@ -1,6 +1,6 @@
 CC=gcc
 LD=gcc
-CFLAGS=-Wall -O2 -std=c99
+CFLAGS=-Wall -g -std=c99
 LDFLAGS=-lSDL -lGLU -lGL
 
 all:	game

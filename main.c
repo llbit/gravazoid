@@ -7,6 +7,7 @@
 
 #include "ark.h"
 #include "render.h"
+#include "cttf/cttf.h"
 
 static void draw_text();
 
@@ -15,6 +16,9 @@ static SDL_Surface *screen;
 
 static uint8_t eye_angle = 0;
 static int key_dx = 0;
+
+static ttf_t* ttf = NULL;
+static shape_t* tshape = NULL;
 
 SDL_sem *semaphore;
 
@@ -368,20 +372,12 @@ void drawframe() {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 	ridge(-eye_angle - 10 + 64, -eye_angle + 10 + 64);
 
-	// TODO
-	//draw_text();
+	draw_text();
 }
 
 void draw_text()
 {
-	shape_t*	shape = new_shape();
-	shape_add_vec(shape, 100.f, 100.f);
-	shape_add_vec(shape, 200.f, 100.f);
-	shape_add_vec(shape, 200.f, 100.f);
-	shape_add_vec(shape, 200.f, 0.f);
-	shape_add_seg(shape, 0, 1);
-	shape_add_seg(shape, 2, 3);
-	render_shape(shape);
+	if (tshape) render_shape(tshape);
 }
 
 void handle_key(SDLKey key, int down) {
@@ -412,11 +408,29 @@ void physics() {
 	eye_angle += key_dx;
 }
 
+void load_font()
+{
+	FILE*	fp;
+	fp = fopen("testfont.ttf", "r");
+	if (!fp) {
+		fprintf(stderr, "Could not find testfont.ttf\n");
+		return;
+	}
+	ttf = ttf_load(fp);
+	if (ttf) {
+		tshape = new_shape();
+		ttf_export_chr_shape(ttf, 'a', tshape);
+	}
+	fclose(fp);
+}
+
 int main() {
 	Uint32 millis;
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
+
+	load_font();
 
 	screen = SDL_SetVideoMode(640, 400, 0, SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_OPENGL);
 	if(!screen) errx(1, "SDL_SetVideoMode");
