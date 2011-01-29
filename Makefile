@@ -1,11 +1,11 @@
 CC=gcc
 LD=gcc
-CFLAGS=-Wall -O3 -std=c99 -g -pg
+CFLAGS=-Wall -std=c99 -g -pg
 LDFLAGS=-lSDL -lGLU -lGL -g -pg
 
 all:	game vex
 
-game:	main.o render.o shape.o cttf.o text.o
+game:	main.o render.o shape.o cttf.o text.o bigint.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
 vex:	vex.o shape.o render.o
@@ -23,6 +23,9 @@ main.o:	main.c ark.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 vex.o: vex.c
+	${CC} ${CFLAGS} -c $< -o $@
+
+bigint.o: bigint.c bigint.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 render.o: render.c render.h
