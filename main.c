@@ -212,7 +212,7 @@ void draw_ball(struct ball *b) {
 }
 
 void drawframe() {
-	int x, y, i;
+	int x, y, i, j;
 	GLfloat light[4];
 	uint8_t heightmap[WORLDH][WORLDW];
 
@@ -354,7 +354,52 @@ void drawframe() {
 	light[3] = 1;
 	glLightfv(GL_LIGHT1, GL_POSITION, light);
 	glEnable(GL_NORMALIZE);
-	glBegin(GL_QUADS);
+	for(i = 0; i < nbrick; i++) {
+		struct brick *b = &brick[i];
+		int coords[4][3];
+
+		light[0] = (b->color & 1)? 1 : 0;
+		light[1] = (b->color & 2)? 1 : 0;
+		light[2] = (b->color & 4)? 1 : 0;
+		light[3] = 1;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
+		light[0] = 1;
+		light[1] = 1;
+		light[2] = 1;
+		light[3] = 1;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, light);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40);
+
+		coords[0][0] = b->x - 8 - WORLDW / 2;
+		coords[0][1] = worldmap[b->y - 8][b->x - 8].sinkage;
+		coords[0][2] = b->y - 8 - WORLDH / 2;
+		coords[1][0] = b->x + 8 - WORLDW / 2;
+		coords[1][1] = worldmap[b->y - 8][b->x + 8].sinkage;
+		coords[1][2] = b->y - 8 - WORLDH / 2;
+		coords[2][0] = b->x + 8 - WORLDW / 2;
+		coords[2][1] = worldmap[b->y + 8][b->x + 8].sinkage;
+		coords[2][2] = b->y + 8 - WORLDH / 2;
+		coords[3][0] = b->x - 8 - WORLDW / 2;
+		coords[3][1] = worldmap[b->y + 8][b->x - 8].sinkage;
+		coords[3][2] = b->y + 8 - WORLDH / 2;
+
+		glBegin(GL_QUADS);
+		glNormal3d(0, 1, 0);
+		glVertex3d(coords[0][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[0][1], coords[0][2]);
+		glVertex3d(coords[1][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[1][1], coords[1][2]);
+		glVertex3d(coords[2][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[2][1], coords[2][2]);
+		glVertex3d(coords[3][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[3][1], coords[3][2]);
+		for(j = 0; j < 4; j++) {
+			int k = (j + 1) % 4;
+			glNormal3d(coords[k][2] - coords[j][2], 0, coords[k][0] - coords[j][0]);
+			glVertex3d(coords[j][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[j][1], coords[j][2]);
+			glVertex3d(coords[j][0], -100, coords[j][2]);
+			glVertex3d(coords[k][0], -100, coords[k][2]);
+			glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[k][1], coords[k][2]);
+		}
+		glEnd();
+	}
+	/*
 	for(y = 0; y < WORLDH - 1; y++) {
 		for(x = 0; x < WORLDW - 1; x++) {
 			struct worldpixel *wp = &worldmap[y][x];
@@ -431,7 +476,7 @@ void drawframe() {
 			}
 		}
 	}
-	glEnd();
+	glEnd();*/
 
 	light[0] = .5;
 	light[1] = .5;
