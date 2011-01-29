@@ -9,14 +9,14 @@
 #include "render.h"
 #include "text.h"
 
-#define INRADIUS 230
-#define OUTRADIUS 235
+#define INRADIUS 250
+#define OUTRADIUS 255
 #define EYERADIUS 270
 #define BALLRADIUS 4
 #define RIDGEHEIGHT 20
 
 #define BALLSPEED 2.1
-#define GRAVITY 0.002
+#define GRAVITY 0.009
 
 #define MEMBRANESTEP 7
 #define NBLUR 96
@@ -38,6 +38,9 @@ static int fps;
 static double eye_angle = 0;
 static int key_dx = 0;
 static int paddle_vel = 0;
+
+int lives;
+int gameover = 1;
 
 static vfont_t* font = NULL;
 
@@ -78,7 +81,7 @@ struct ball {
 	int		flags;
 	float		xhist[NBLUR], yhist[NBLUR];
 } ball[MAXBALL];
-int nball = 1;
+int nball;
 
 void add_brick(int x, int y, int color) {
 	if(nbrick == MAXBRICK) errx(1, "MAXBRICK");
@@ -144,7 +147,13 @@ void glsetup() {
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, BLOBSIZE, BLOBSIZE, GL_LUMINANCE, GL_UNSIGNED_BYTE, blobtexture);
 
 	ballquad = gluNewQuadric();
+}
 
+void resetlevel() {
+	int x, y;
+
+	srand(0);
+	nbrick = 0;
 	for(y = 0; y < 12; y++) {
 		for(x = 0; x < 18; x++) {
 			if(x != 8 && x != 9 && y != 5 && y != 6) {
@@ -152,6 +161,13 @@ void glsetup() {
 			}
 		}
 	}
+
+	score = 0;
+	lives = 5;
+
+	nball = 1;
+	ball[0].flags = BALLF_HELD;
+	worldmap_valid = 0;
 }
 
 /*void cross(GLdouble *dest, GLdouble *a, GLdouble *b) {
@@ -291,7 +307,7 @@ void drawscene(int with_membrane) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	gluLookAt(
-		EYERADIUS * sin(eye_angle * M_PI * 2 / 256), 250, EYERADIUS * cos(eye_angle * M_PI * 2 / 256),
+		EYERADIUS * sin(eye_angle * M_PI * 2 / 256), 290, EYERADIUS * cos(eye_angle * M_PI * 2 / 256),
 		0, -100, 0,
 		0, 1, 0);
 
@@ -495,13 +511,21 @@ void drawframe() {
 	draw_text();
 }
 
-void draw_text()
-{
+void draw_text() {
 	char buf[32];
+	int i;
+
 	snprintf(buf, sizeof(buf), "Score: %d", score);
 	draw_utf_str(font, buf, 2.f, 4.f);
-	snprintf(buf, sizeof(buf), "%d fps", fps);
-	draw_utf_str(font, buf, 2.f, 100 * 7);
+	snprintf(buf, sizeof(buf), "%3d fps", fps);
+	draw_utf_str(font, buf, 2.f, screen->h - 100);
+	for(i = 0; i < lives; i++) {
+		draw_utf_str(font, "*", screen->w - 300 + 60 * i, screen->h - 100);
+	}
+
+	if(gameover) {
+		draw_utf_str(font, "game over", screen->w / 2 - 270, screen->h / 2);
+	}
 }
 
 void handle_key(SDLKey key, int down) {
@@ -526,13 +550,20 @@ void handle_key(SDLKey key, int down) {
 			}
 			break;
 		case SDLK_SPACE:
-			for(i = 0; i < nball; i++) {
-				if(ball[i].flags & BALLF_HELD) {
-					ball[i].flags &= ~BALLF_HELD;
-					ball[i].x = (INRADIUS - BALLRADIUS) * cos((64 - eye_angle) * M_PI * 2 / 256);
-					ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
-					ball[i].dx = -ball[i].x / (INRADIUS - BALLRADIUS);
-					ball[i].dy = -ball[i].y / (INRADIUS - BALLRADIUS);
+			if(down) {
+				if(gameover) {
+					gameover = 0;
+					resetlevel();
+				} else {
+					for(i = 0; i < nball; i++) {
+						if(ball[i].flags & BALLF_HELD) {
+							ball[i].flags &= ~BALLF_HELD;
+							ball[i].x = (INRADIUS - BALLRADIUS) * cos((64 - eye_angle) * M_PI * 2 / 256);
+							ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
+							ball[i].dx = -ball[i].x / (INRADIUS - BALLRADIUS);
+							ball[i].dy = -ball[i].y / (INRADIUS - BALLRADIUS);
+						}
+					}
 				}
 			}
 			break;
@@ -660,6 +691,12 @@ void physics() {
 				if(ball[i].flags & BALLF_OUTSIDE) {
 					if(r > 2 * INRADIUS) {
 						ball[i].flags = BALLF_HELD;
+						if(lives) {
+							lives--;
+						} else {
+							gameover = 1;
+							nball = 0;
+						}
 					}
 				} else {
 					double angle = atan2(ball[i].y, ball[i].x);
@@ -706,10 +743,10 @@ int main() {
 
 	SDL_ShowCursor(SDL_DISABLE);
 
-	ball[0].flags = BALLF_HELD;
-
 	physics();
 	millis = SDL_GetTicks();
+	resetlevel();
+	nball = 0;
 
 	while(running) {
 		SDL_Event event;
