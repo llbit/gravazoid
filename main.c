@@ -14,7 +14,7 @@
 #define BALLRADIUS 4
 #define RIDGEHEIGHT 20
 
-#define BALLSPEED 1.5
+#define BALLSPEED 2.1
 #define GRAVITY 0.002
 
 #define MEMBRANESTEP 4
@@ -573,7 +573,7 @@ void removebrick(struct brick *b) {
 	worldmap_valid = 0;
 }
 
-void collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
+int collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
 	int rm = 0;
 
 	if(ba->x >= br->x - 8 - WORLDW/2
@@ -594,7 +594,7 @@ void collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
 	&& ba->y <= br->y + 8 - WORLDH/2) {
 		if(ba->dx < 0
 		&& ba->x < (br->x + 8 - WORLDW/2)
-		&& prevx >= (br->x + 8 - WORLDH/2)) {
+		&& prevx >= (br->x + 8 - WORLDW/2)) {
 			ba->dx = -ba->dx * 20;
 			rm = 1;
 		} else if(ba->dx > 0
@@ -605,6 +605,7 @@ void collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
 		}
 	}
 	if(rm) removebrick(br);
+	return rm;
 }
 
 void rotate(double *xp, double *yp, double a) {
@@ -672,7 +673,7 @@ void physics() {
 					} else {
 						double normx = ball[i].x;
 						double normy = ball[i].y;
-						rotate(&normx, &normy, -angdiff * 2);
+						rotate(&normx, &normy, -angdiff * .9);
 						mirror(&ball[i].dx, &ball[i].dy, normx, normy);
 						ball[i].x = prevx;
 						ball[i].y = prevy;
@@ -681,7 +682,7 @@ void physics() {
 			} else {
 				for(j = 0; j < nbrick; j++) {
 					if(brick[j].flags & BRICKF_LIVE) {
-						collide(&ball[i], prevx, prevy, &brick[j]);
+						if(collide(&ball[i], prevx, prevy, &brick[j])) break;
 					}
 				}
 			}
