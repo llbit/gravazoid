@@ -77,10 +77,6 @@ void	bigint_add(bigint_t* a, bigint_t* b, bigint_t* c)
 		return;
 	}
 
-	printf("adding bigints:\n");
-	print_bigint(a);
-	print_bigint(b);
-
 	bigint_widen(c, a->n+2);
 
 	// a->n is >= b->n
@@ -104,9 +100,6 @@ void	bigint_add(bigint_t* a, bigint_t* b, bigint_t* c)
 		c->d[i] = rem;
 		c->n = i;
 	}
-
-	printf("= ");
-	print_bigint(c);
 }
 
 void	print_bigint(bigint_t* a)

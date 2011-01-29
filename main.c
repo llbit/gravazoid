@@ -79,6 +79,11 @@ struct ball {
 } ball[MAXBALL];
 int nball;
 
+static void handle_event(SDL_Event* event);
+static void on_motion(SDL_MouseMotionEvent* motion);
+static void on_button(SDL_MouseButtonEvent* button);
+static void on_action();
+
 void add_brick(int x, int y, int color) {
 	if(nbrick == MAXBRICK) errx(1, "MAXBRICK");
 	brick[nbrick].x = x;
@@ -526,7 +531,6 @@ void draw_text() {
 }
 
 void handle_key(SDLKey key, int down) {
-	int i;
 
 	switch(key) {
 		case SDLK_q:
@@ -547,22 +551,8 @@ void handle_key(SDLKey key, int down) {
 			}
 			break;
 		case SDLK_SPACE:
-			if(down) {
-				if(gameover) {
-					gameover = 0;
-					resetlevel(1);
-				} else {
-					for(i = 0; i < nball; i++) {
-						if(ball[i].flags & BALLF_HELD) {
-							ball[i].flags &= ~BALLF_HELD;
-							ball[i].x = (INRADIUS - BALLRADIUS) * cos((64 - eye_angle) * M_PI * 2 / 256);
-							ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
-							ball[i].dx = -ball[i].x / (INRADIUS - BALLRADIUS);
-							ball[i].dy = -ball[i].y / (INRADIUS - BALLRADIUS);
-						}
-					}
-				}
-			}
+			if (down)
+				on_action();
 			break;
 		case SDLK_g:
 			if(down) {
@@ -788,18 +778,58 @@ int main(int argc, const char** argv) {
 
 		SDL_GL_SwapBuffers();
 		while(SDL_PollEvent(&event)) {
-			switch(event.type) {
-				case SDL_KEYDOWN:
-					handle_key(event.key.keysym.sym, 1);
-					break;
-				case SDL_KEYUP:
-					handle_key(event.key.keysym.sym, 0);
-					break;
-				default:
-					break;
-			}
+			handle_event(&event);
 		}
 	}
 
 	return 0;
+}
+
+void handle_event(SDL_Event* event)
+{
+	switch(event->type) {
+		case SDL_MOUSEBUTTONDOWN:
+			on_button(&event->button);
+			break;
+		case SDL_MOUSEMOTION:
+			on_motion(&event->motion);
+			break;
+		case SDL_KEYDOWN:
+			handle_key(event->key.keysym.sym, 1);
+			break;
+		case SDL_KEYUP:
+			handle_key(event->key.keysym.sym, 0);
+			break;
+		default:;
+	}
+}
+
+void on_motion(SDL_MouseMotionEvent* motion)
+{
+	eye_angle += motion->xrel * .18;
+}
+
+void on_button(SDL_MouseButtonEvent* button)
+{
+	if (button->button == SDL_BUTTON_LEFT)
+		on_action();
+}
+
+void on_action()
+{
+	int i;
+	if(gameover) {
+		gameover = 0;
+		resetlevel(1);
+	} else {
+		for(i = 0; i < nball; i++) {
+			if(ball[i].flags & BALLF_HELD) {
+				ball[i].flags &= ~BALLF_HELD;
+				ball[i].x = (INRADIUS - BALLRADIUS) * cos((64 - eye_angle) * M_PI * 2 / 256);
+				ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
+				ball[i].dx = -ball[i].x / (INRADIUS - BALLRADIUS);
+				ball[i].dy = -ball[i].y / (INRADIUS - BALLRADIUS);
+			}
+		}
+	}
 }
