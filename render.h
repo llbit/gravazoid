@@ -8,6 +8,7 @@
 #include "cttf/shape.h"
 
 void render_shape(shape_t* shape, float x, float y);
+void render_brick(int coords[4][2], int y);
 
 #endif
 

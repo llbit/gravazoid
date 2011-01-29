@@ -11,23 +11,6 @@
 #include "text.h"
 #include "bigint.h"
 
-#define INRADIUS 250
-#define OUTRADIUS 255
-#define EYERADIUS 270
-#define BALLRADIUS 4
-#define RIDGEHEIGHT 20
-
-#define BALLSPEED 2.1
-#define GRAVITY 0.009
-
-#define MEMBRANESTEP 7
-#define NBLUR 96
-
-#define MAX_PADDLE_VEL 1000
-
-#define MAXBRICK 256
-#define MAXBALL 16
-
 static int colors[][3] = {
 	{0x65, 0x9D, 0xFD}, // light blue
 	{0x63, 0x7E, 0x9A}, // dark blue
@@ -349,7 +332,7 @@ void drawscene(int with_membrane) {
 	for(i = 0; i < nbrick; i++) {
 		struct brick *b = &brick[i];
 		if(b->flags & BRICKF_LIVE) {
-			int coords[4][3];
+			int coords[4][2];
 
 			light[0] = colors[b->color][0] / 255.;
 			light[1] = colors[b->color][1] / 255.;
@@ -363,33 +346,21 @@ void drawscene(int with_membrane) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, light);
 			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40);*/
 
+			int y = (worldmap[b->y - 8][b->x - 8].sinkage +
+				worldmap[b->y + 8][b->x - 8].sinkage +
+				worldmap[b->y + 8][b->x + 8].sinkage +
+				worldmap[b->y - 8][b->x + 8].sinkage) / 4;
 			coords[0][0] = b->x - 8 - WORLDW / 2;
-			coords[0][1] = worldmap[b->y - 8][b->x - 8].sinkage;
-			coords[0][2] = b->y - 8 - WORLDH / 2;
+			coords[0][1] = b->y - 8 - WORLDH / 2;
 			coords[1][0] = b->x - 8 - WORLDW / 2;
-			coords[1][1] = worldmap[b->y + 8][b->x - 8].sinkage;
-			coords[1][2] = b->y + 7 - WORLDH / 2;
+			coords[1][1] = b->y + 7 - WORLDH / 2;
 			coords[2][0] = b->x + 7 - WORLDW / 2;
-			coords[2][1] = worldmap[b->y + 8][b->x + 8].sinkage;
-			coords[2][2] = b->y + 7 - WORLDH / 2;
+			coords[2][1] = b->y + 7 - WORLDH / 2;
 			coords[3][0] = b->x + 7 - WORLDW / 2;
-			coords[3][1] = worldmap[b->y - 8][b->x + 8].sinkage;
-			coords[3][2] = b->y - 8 - WORLDH / 2;
+			coords[3][1] = b->y - 8 - WORLDH / 2;
 
 			glBegin(GL_QUADS);
-			glNormal3d(0, 1, 0);
-			glVertex3d(coords[0][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[0][1], coords[0][2]);
-			glVertex3d(coords[1][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[1][1], coords[1][2]);
-			glVertex3d(coords[2][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[2][1], coords[2][2]);
-			glVertex3d(coords[3][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[3][1], coords[3][2]);
-			for(j = 0; j < 4; j++) {
-				int k = (j + 1) % 4;
-				glNormal3d(coords[k][2] - coords[j][2], 0, coords[k][0] - coords[j][0]);
-				glVertex3d(coords[j][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[j][1], coords[j][2]);
-				glVertex3d(coords[j][0], -100, coords[j][2]);
-				glVertex3d(coords[k][0], -100, coords[k][2]);
-				glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[k][1], coords[k][2]);
-			}
+			render_brick(coords, y);
 			glEnd();
 
 			// draw wirebox
@@ -399,17 +370,7 @@ void drawscene(int with_membrane) {
 			glDisable(GL_FOG);
 			glColor3f(0, 0, 0);
 			glBegin(GL_QUADS);
-			glVertex3d(coords[0][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[0][1], coords[0][2]);
-			glVertex3d(coords[1][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[1][1], coords[1][2]);
-			glVertex3d(coords[2][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[2][1], coords[2][2]);
-			glVertex3d(coords[3][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[3][1], coords[3][2]);
-			for(j = 0; j < 4; j++) {
-				int k = (j + 1) % 4;
-				glVertex3d(coords[j][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[j][1], coords[j][2]);
-				glVertex3d(coords[j][0], -100, coords[j][2]);
-				glVertex3d(coords[k][0], -100, coords[k][2]);
-				glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[k][1], coords[k][2]);
-			}
+			render_brick(coords, y);
 			glEnd();
 			glPopAttrib();
 		}
