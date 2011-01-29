@@ -14,9 +14,12 @@
 #define BALLRADIUS 6
 #define RIDGEHEIGHT 20
 
+#define BALLSPEED 2
+#define GRAVITY 0.002
+
 #define MEMBRANESTEP 4
 
-#define MAXBRICK 16
+#define MAXBRICK 256
 #define MAXBALL 16
 
 static void draw_text();
@@ -40,17 +43,18 @@ enum {
 
 struct worldpixel {
 	uint8_t		sinkage;
-	uint8_t		color;
-	uint8_t		height;
 } worldmap[WORLDH][WORLDW];
 
 struct brick {
 	int		x, y;
-	int		color;
+	uint8_t		color;
+	uint8_t		flags;
 } brick[MAXBRICK];
 int nbrick;
 
-#define BF_HELD		1
+#define BALLF_HELD		1
+
+#define BRICKF_LIVE		1
 
 struct ball {
 	double		x, y;
@@ -64,6 +68,7 @@ void add_brick(int x, int y, int color) {
 	brick[nbrick].x = x;
 	brick[nbrick].y = y;
 	brick[nbrick].color = color;
+	brick[nbrick].flags = BRICKF_LIVE;
 	nbrick++;
 }
 
@@ -121,21 +126,9 @@ void glsetup() {
 
 	ballquad = gluNewQuadric();
 
-	add_brick(40, 40, 1);
-	add_brick(90, 90, 2);
-	add_brick(140, 140, 3);
-	add_brick(190, 190, 4);
-	add_brick(174, 190, 5);
-	add_brick(158, 190, 6);
-}
-
-void add_thing(int xpos, int ypos, int color) {
-	int x, y;
-
-	for(y = -8; y <= 8; y++) {
-		for(x = -8; x <= 8; x++) {
-			worldmap[ypos + y][xpos + x].color = color;
-			worldmap[ypos + y][xpos + x].height = 1;
+	for(y = 0; y < 12; y++) {
+		for(x = 0; x < 18; x++) {
+			add_brick(x * 16 + 24, y * 16 + 32, 1 + (rand() % 6));
 		}
 	}
 }
@@ -256,7 +249,7 @@ void drawmembrane() {
 	glEnd();
 
 	glEnable(GL_CULL_FACE);
-	glColor3d(.2, .2, .4);
+	glColor3d(.1, .1, .2);
 	for(y = 0; y < WORLDH; y += MEMBRANESTEP) {
 		glBegin(GL_QUAD_STRIP);
 		for(x = 0; x < WORLDW; x += MEMBRANESTEP) {
@@ -283,11 +276,6 @@ void drawframe() {
 	uint8_t heightmap[WORLDH][WORLDW];
 
 	if(!worldmap_valid) {
-		memset(worldmap, 0, sizeof(worldmap));
-		for(i = 0; i < nbrick; i++) {
-			add_thing(brick[i].x, brick[i].y, brick[i].color);
-		}
-
 		glViewport(0, 0, WORLDW, WORLDH);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glMatrixMode(GL_PROJECTION);
@@ -305,16 +293,18 @@ void drawframe() {
 		glColor3d(.2, .2, .2);
 		glBegin(GL_QUADS);
 		for(i = 0; i < nbrick; i++) {
-			x = brick[i].x;
-			y = brick[i].y;
-			glTexCoord2d(0, 0);
-			glVertex3d(x - BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
-			glTexCoord2d(1, 0);
-			glVertex3d(x + BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
-			glTexCoord2d(1, 1);
-			glVertex3d(x + BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
-			glTexCoord2d(0, 1);
-			glVertex3d(x - BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
+			if(brick[i].flags & BRICKF_LIVE) {
+				x = brick[i].x;
+				y = brick[i].y;
+				glTexCoord2d(0, 0);
+				glVertex3d(x - BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
+				glTexCoord2d(1, 0);
+				glVertex3d(x + BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
+				glTexCoord2d(1, 1);
+				glVertex3d(x + BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
+				glTexCoord2d(0, 1);
+				glVertex3d(x - BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
+			}
 		}
 		glEnd();
 		//return;
@@ -369,48 +359,50 @@ void drawframe() {
 	glEnable(GL_NORMALIZE);
 	for(i = 0; i < nbrick; i++) {
 		struct brick *b = &brick[i];
-		int coords[4][3];
+		if(b->flags & BRICKF_LIVE) {
+			int coords[4][3];
 
-		light[0] = (b->color & 1)? 1 : 0;
-		light[1] = (b->color & 2)? 1 : 0;
-		light[2] = (b->color & 4)? 1 : 0;
-		light[3] = 1;
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
-		light[0] = 1;
-		light[1] = 1;
-		light[2] = 1;
-		light[3] = 1;
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, light);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40);
+			light[0] = (b->color & 1)? 1 : 0;
+			light[1] = (b->color & 2)? 1 : 0;
+			light[2] = (b->color & 4)? 1 : 0;
+			light[3] = 1;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
+			light[0] = 1;
+			light[1] = 1;
+			light[2] = 1;
+			light[3] = 1;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, light);
+			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40);
 
-		coords[0][0] = b->x - 8 - WORLDW / 2;
-		coords[0][1] = worldmap[b->y - 8][b->x - 8].sinkage;
-		coords[0][2] = b->y - 8 - WORLDH / 2;
-		coords[1][0] = b->x - 8 - WORLDW / 2;
-		coords[1][1] = worldmap[b->y + 8][b->x - 8].sinkage;
-		coords[1][2] = b->y + 8 - WORLDH / 2;
-		coords[2][0] = b->x + 8 - WORLDW / 2;
-		coords[2][1] = worldmap[b->y + 8][b->x + 8].sinkage;
-		coords[2][2] = b->y + 8 - WORLDH / 2;
-		coords[3][0] = b->x + 8 - WORLDW / 2;
-		coords[3][1] = worldmap[b->y - 8][b->x + 8].sinkage;
-		coords[3][2] = b->y - 8 - WORLDH / 2;
+			coords[0][0] = b->x - 8 - WORLDW / 2;
+			coords[0][1] = worldmap[b->y - 8][b->x - 8].sinkage;
+			coords[0][2] = b->y - 8 - WORLDH / 2;
+			coords[1][0] = b->x - 8 - WORLDW / 2;
+			coords[1][1] = worldmap[b->y + 8][b->x - 8].sinkage;
+			coords[1][2] = b->y + 7 - WORLDH / 2;
+			coords[2][0] = b->x + 7 - WORLDW / 2;
+			coords[2][1] = worldmap[b->y + 8][b->x + 8].sinkage;
+			coords[2][2] = b->y + 7 - WORLDH / 2;
+			coords[3][0] = b->x + 7 - WORLDW / 2;
+			coords[3][1] = worldmap[b->y - 8][b->x + 8].sinkage;
+			coords[3][2] = b->y - 8 - WORLDH / 2;
 
-		glBegin(GL_QUADS);
-		glNormal3d(0, 1, 0);
-		glVertex3d(coords[0][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[0][1], coords[0][2]);
-		glVertex3d(coords[1][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[1][1], coords[1][2]);
-		glVertex3d(coords[2][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[2][1], coords[2][2]);
-		glVertex3d(coords[3][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[3][1], coords[3][2]);
-		for(j = 0; j < 4; j++) {
-			int k = (j + 1) % 4;
-			glNormal3d(coords[k][2] - coords[j][2], 0, coords[k][0] - coords[j][0]);
-			glVertex3d(coords[j][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[j][1], coords[j][2]);
-			glVertex3d(coords[j][0], -100, coords[j][2]);
-			glVertex3d(coords[k][0], -100, coords[k][2]);
-			glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[k][1], coords[k][2]);
+			glBegin(GL_QUADS);
+			glNormal3d(0, 1, 0);
+			glVertex3d(coords[0][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[0][1], coords[0][2]);
+			glVertex3d(coords[1][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[1][1], coords[1][2]);
+			glVertex3d(coords[2][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[2][1], coords[2][2]);
+			glVertex3d(coords[3][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[3][1], coords[3][2]);
+			for(j = 0; j < 4; j++) {
+				int k = (j + 1) % 4;
+				glNormal3d(coords[k][2] - coords[j][2], 0, coords[k][0] - coords[j][0]);
+				glVertex3d(coords[j][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[j][1], coords[j][2]);
+				glVertex3d(coords[j][0], -100, coords[j][2]);
+				glVertex3d(coords[k][0], -100, coords[k][2]);
+				glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[k][1], coords[k][2]);
+			}
+			glEnd();
 		}
-		glEnd();
 	}
 	/*
 	for(y = 0; y < WORLDH - 1; y++) {
@@ -544,8 +536,8 @@ void handle_key(SDLKey key, int down) {
 			break;
 		case SDLK_SPACE:
 			for(i = 0; i < nball; i++) {
-				if(ball[i].flags & BF_HELD) {
-					ball[i].flags &= ~BF_HELD;
+				if(ball[i].flags & BALLF_HELD) {
+					ball[i].flags &= ~BALLF_HELD;
 					ball[i].dx = -ball[i].x / (INRADIUS - BALLRADIUS);
 					ball[i].dy = -ball[i].y / (INRADIUS - BALLRADIUS);
 				}
@@ -570,39 +562,84 @@ void mirror(double *x1, double *y1, double x2, double y2) {
 	*y1 -= y2 * 2;
 }
 
+void removebrick(struct brick *b) {
+	b->flags &= ~BRICKF_LIVE;
+	worldmap_valid = 0;
+}
+
+void collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
+	if(ba->x >= br->x - 8 - WORLDW/2
+	&& ba->x <= br->x + 8 - WORLDW/2) {
+		if(ba->dy < 0
+		&& ba->y < (br->y + 8 - WORLDH/2)
+		&& prevy >= (br->y + 8 - WORLDH/2)) {
+			ba->dy = -ba->dy * 2;
+			removebrick(br);
+			return;
+		} else if(ba->dy > 0
+		&& ba->y > (br->y - 8 - WORLDH/2)
+		&& prevy <= (br->y - 8 - WORLDH/2)) {
+			ba->dy = -ba->dy * 2;
+			removebrick(br);
+			return;
+		}
+	}
+	if(ba->y >= br->y - 8 - WORLDH/2
+	&& ba->y <= br->y + 8 - WORLDH/2) {
+		if(ba->dx < 0
+		&& ba->x < (br->x + 8 - WORLDW/2)
+		&& prevx >= (br->x + 8 - WORLDH/2)) {
+			ba->dx = -ba->dx * 2;
+			removebrick(br);
+		} else if(ba->dx > 0
+		&& ba->x > (br->x - 8 - WORLDW/2)
+		&& prevx <= (br->x - 8 - WORLDW/2)) {
+			ba->dx = -ba->dx * 2;
+			removebrick(br);
+		}
+	}
+}
+
 void physics() {
 	int i, j;
-	double r;
+	double r, size;
+	double prevx, prevy;
 
 	eye_angle += key_dx;
 
 	for(i = 0; i < nball; i++) {
-		if(ball[i].flags & BF_HELD) {
+		if(ball[i].flags & BALLF_HELD) {
 			ball[i].x = (INRADIUS - BALLRADIUS) * cos((64 - eye_angle) * M_PI * 2 / 256);
 			ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
 			ball[i].dx = ball[i].dy = 0;
 		} else {
 			for(j = 0; j < nbrick; j++) {
-				double xdiff = (brick[j].x - WORLDW / 2) - ball[i].x;
-				double ydiff = (brick[j].y - WORLDH / 2) - ball[i].y;
-				double dist2 = xdiff * xdiff + ydiff * ydiff;
-				if(dist2 && dist2 < 100) {
-					ball[i].dx += xdiff / dist2;
-					ball[i].dy += ydiff / dist2;
+				if(brick[j].flags & BRICKF_LIVE) {
+					double xdiff = (brick[j].x - WORLDW / 2) - ball[i].x;
+					double ydiff = (brick[j].y - WORLDH / 2) - ball[i].y;
+					double dist2 = xdiff * xdiff + ydiff * ydiff;
+					if(dist2) {
+						ball[i].dx += GRAVITY * xdiff / dist2;
+						ball[i].dy += GRAVITY * ydiff / dist2;
+					}
 				}
 			}
-			if(ball[i].dx || ball[i].dy) {
-				double size = hypot(ball[i].dx, ball[i].dy);
-				if(size < 1) {
-					ball[i].dx /= size;
-					ball[i].dy /= size;
-				}
-			}
-			ball[i].x += ball[i].dx;
-			ball[i].y += ball[i].dy;
+			size = hypot(ball[i].dx, ball[i].dy);
+			ball[i].dx /= size;
+			ball[i].dy /= size;
+			prevx = ball[i].x;
+			prevy = ball[i].y;
+			ball[i].x += ball[i].dx * BALLSPEED;
+			ball[i].y += ball[i].dy * BALLSPEED;
 			r = hypot(ball[i].x, ball[i].y);
 			if(r > INRADIUS) {
 				mirror(&ball[i].dx, &ball[i].dy, ball[i].x, ball[i].y);
+			} else {
+				for(j = 0; j < nbrick; j++) {
+					if(brick[j].flags & BRICKF_LIVE) {
+						collide(&ball[i], prevx, prevy, &brick[j]);
+					}
+				}
 			}
 		}
 	}
@@ -619,7 +656,7 @@ int main() {
 
 	SDL_ShowCursor(SDL_DISABLE);
 
-	ball[0].flags = BF_HELD;
+	ball[0].flags = BALLF_HELD;
 
 	physics();
 	millis = SDL_GetTicks();

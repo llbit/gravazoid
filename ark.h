@@ -6,7 +6,7 @@
 
 #define BORDER 512
 
-#define GRIDSCALE .06
+#define GRIDSCALE .12
 #define HEIGHTSCALE 20
 #define NORMSCALE .1
 #define BLOBSIZE 64
@@ -17,8 +17,6 @@
 #define OUTRADIUS 230
 #define EYERADIUS 270
 #define RIDGEHEIGHT 20
-
-#define MAXBRICK 16
 
 #endif
 
