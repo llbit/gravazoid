@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "vector.h"
+#include "shape.h"
 
 #if 1
 #define SWAP_ENDIAN_WORD(a) \
@@ -75,10 +76,10 @@ void ttf_interpolate(
 		float			scale);
 
 // export a TTF character to a vector list
-void ttf_export_chr_vlist(
+void ttf_export_chr_shape(
 		ttf_t*			ttfobj,
 		uint16_t		chr,
-		vlist_t**		vlist);
+		shape_t*		shape);
 
 struct ttf_gd_list {
 	ttf_gd_list_t*		succ;

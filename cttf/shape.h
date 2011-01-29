@@ -1,7 +1,7 @@
 #ifndef CTTF_SHAPE_H
 #define CTTF_SHAPE_H
 
-#include "vec.h"
+#include "vector.h"
 
 typedef struct shape	shape_t;
 

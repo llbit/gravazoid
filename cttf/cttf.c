@@ -781,15 +781,15 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 	free(simple.flags);
 }
 
-void ttf_export_chr_vlist(ttf_t* ttfobj, uint16_t chr, vlist_t** vlist)
+void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape)
 {
 	if (ttfobj->interpolation_level) {
 		// interpolate the curves
 		vector_t*	points;
 		uint16_t*	endpoints;
 		uint16_t	npoints;
-		ttf_interpolate(chr, &points, &endpoints,
-				&npoints, 1.f/(float)cttf->upem);
+		ttf_interpolate(ttfobj, chr, &points, &endpoints,
+				npoints, 1.f/(float)ttfobj->upem);
 
 		uint16_t	lim = 0;
 		uint16_t	e;
@@ -800,11 +800,11 @@ void ttf_export_chr_vlist(ttf_t* ttfobj, uint16_t chr, vlist_t** vlist)
 			lim += endpoints[e];
 			origin = p;
 			for (; p < lim; p++) {
-				shape_add_vec(points[p].x, points[p].y);
+				shape_add_vec(shape, points[p].x, points[p].y);
                 		if (p < (lim - 1))
-					shape_add_seg(p, p+1);
+					shape_add_seg(shape, p, p+1);
                 		else
-					shape_add_seg(p, origin);
+					shape_add_seg(shape, p, origin);
 			}
 		}
 		free(points);
@@ -1023,16 +1023,16 @@ void ttf_interpolate(
 	ttf_glyph_data_t*	glyph;
 
 	glyph = &(ttfobj->glyph_data[ttfobj->glyph_table[chr]]);
-	cpoints = malloc(sizeof(vector_t) * glyph->npoints);
-	*points = malloc(sizeof(vector_t) * glyph->npoints * ttfobj->interpolation_level);
-	*endpoints = new uint16_t[glyph_data[glyph_table[chr]].ncontours];
+	cpoints = malloc(sizeof(vector_t) * npoints);
+	*points = malloc(sizeof(vector_t) * npoints * ttfobj->interpolation_level);
+	*endpoints = malloc(sizeof(uint16_t) * glyph->ncontours);
 
 	for (contour = 0, point = 0; contour < glyph->ncontours; contour++) {
 		for (; point <= glyph->endpoints[contour]; point++) {
 			cpoints[point].x = scale * (glyph->px[point] - glyph->lsb);
 			cpoints[point].y = scale * glyph->py[point];
 		}
-		(*endpoints)[contour] = ttf_interpolate_chr(chr, *points, cpoints, cpind, contour);
+		(*endpoints)[contour] = ttf_interpolate_chr(ttfobj, chr, *points, cpoints, cpind, contour);
 	}
 	free(cpoints);
 }
