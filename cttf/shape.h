@@ -11,7 +11,7 @@ void shape_add_vec(shape_t* shape, float x, float y);
 void shape_add_seg(shape_t* shape, int n, int m);
 
 struct shape {
-	vector_t*	vectors;
+	vector_t*	vec;
 	int		nvec;
 	int		maxvec;
 	int*		seg;

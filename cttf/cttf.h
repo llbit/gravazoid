@@ -72,7 +72,6 @@ void ttf_interpolate(
 		uint16_t		chr,
 		vector_t**		points,
 		uint16_t**		endpoints,
-		uint16_t		npoints,
 		float			scale);
 
 // export a TTF character to a vector list

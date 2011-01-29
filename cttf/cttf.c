@@ -441,6 +441,8 @@ found_platform:
 				&glyf, indextolocation, i);
 	}
 	free(indextolocation);
+
+	return ttfobj;
 }
 
 /*
@@ -607,7 +609,7 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 		memset(endpoints, 0, ncontours << 1);
 
 		ttf_gd_list_t* p = components;
-		int i;
+		int i = 0;
 		while (p != NULL) {
 			component = p->data;
 			olim = component->ncontours - 1;
@@ -787,14 +789,14 @@ void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape)
 		// interpolate the curves
 		vector_t*	points;
 		uint16_t*	endpoints;
-		uint16_t	npoints;
+
 		ttf_interpolate(ttfobj, chr, &points, &endpoints,
-				npoints, 1.f/(float)ttfobj->upem);
+				1.f/(float)ttfobj->upem);
 
 		uint16_t	lim = 0;
 		uint16_t	e;
 		uint16_t	p = 0;
-		uint16_t	p2 = 0;
+		//uint16_t	p2 = 0;
 		uint16_t	origin;
 		for (e = 0; e < ttfobj->glyph_data[ttfobj->glyph_table[chr]].ncontours; e++) {
 			lim += endpoints[e];
@@ -1012,7 +1014,6 @@ void ttf_interpolate(
 		uint16_t	chr,		// character code
 		vector_t**	points,
 		uint16_t**	endpoints,
-		uint16_t	npoints,
 		float		scale)
 {
 	uint16_t	contour;
@@ -1023,8 +1024,8 @@ void ttf_interpolate(
 	ttf_glyph_data_t*	glyph;
 
 	glyph = &(ttfobj->glyph_data[ttfobj->glyph_table[chr]]);
-	cpoints = malloc(sizeof(vector_t) * npoints);
-	*points = malloc(sizeof(vector_t) * npoints * ttfobj->interpolation_level);
+	cpoints = malloc(sizeof(vector_t) * glyph->npoints);
+	*points = malloc(sizeof(vector_t) * glyph->npoints * ttfobj->interpolation_level);
 	*endpoints = malloc(sizeof(uint16_t) * glyph->ncontours);
 
 	for (contour = 0, point = 0; contour < glyph->ncontours; contour++) {
@@ -1032,7 +1033,9 @@ void ttf_interpolate(
 			cpoints[point].x = scale * (glyph->px[point] - glyph->lsb);
 			cpoints[point].y = scale * glyph->py[point];
 		}
-		(*endpoints)[contour] = ttf_interpolate_chr(ttfobj, chr, *points, cpoints, cpind, contour);
+		(*endpoints)[contour] = ttf_interpolate_chr(
+				ttfobj, chr, *points,
+				cpoints, &cpind, contour);
 	}
 	free(cpoints);
 }
