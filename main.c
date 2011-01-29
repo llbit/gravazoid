@@ -21,7 +21,7 @@
 #define MEMBRANESTEP 7
 #define NBLUR 96
 
-#define MAX_PADDLE_VEL 100
+#define MAX_PADDLE_VEL 1000
 
 #define MAXBRICK 256
 #define MAXBALL 16
@@ -657,9 +657,9 @@ void physics() {
 	double r, size;
 	double prevx, prevy;
 
-	paddle_vel = (paddle_vel + key_dx * MAX_PADDLE_VEL) / 2;
+	paddle_vel = (paddle_vel * .9 + key_dx * MAX_PADDLE_VEL * .1);
 
-	eye_angle += paddle_vel * .018;
+	eye_angle += paddle_vel * .0018;
 	if(eye_angle >= 256) eye_angle -= 256;
 	if(eye_angle < 0) eye_angle += 256;
 
