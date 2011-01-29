@@ -33,7 +33,7 @@ SDL_Surface *screen;
 
 static int softglow = 0;
 
-static int fps;
+static int fps = 0;
 
 static double eye_angle = 0;
 static int key_dx = 0;
@@ -732,7 +732,9 @@ void physics() {
 }
 
 int main() {
-	Uint32 millis;
+	int	time = 0;
+	int	frames = 0;
+	Uint32	millis;
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
@@ -752,8 +754,10 @@ int main() {
 		SDL_Event event;
 		Uint32 now = SDL_GetTicks();
 
-		if(now != millis) {
-			fps = (fps + (1000 / (now - millis))) / 2;
+		time += now - millis;
+		if (time >= 1000) {
+			fps = (int) (frames / (time / 1000.f));
+			frames = time = 0;
 		}
 
 		while(now > millis + 10) {
@@ -762,6 +766,7 @@ int main() {
 		}
 
 		drawframe();
+		frames++;
 
 		SDL_GL_SwapBuffers();
 		while(SDL_PollEvent(&event)) {
