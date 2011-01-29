@@ -3,3 +3,4 @@ game
 .*\.swo
 *.o
 Session.vim
+gmon.out
