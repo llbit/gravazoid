@@ -10,7 +10,7 @@
 #include "text.h"
 
 #define INRADIUS 230
-#define OUTRADIUS 240
+#define OUTRADIUS 235
 #define EYERADIUS 270
 #define BALLRADIUS 4
 #define RIDGEHEIGHT 20
@@ -19,6 +19,7 @@
 #define GRAVITY 0.002
 
 #define MEMBRANESTEP 7
+#define NBLUR 96
 
 #define MAX_PADDLE_VEL 100
 
@@ -30,7 +31,9 @@ static void draw_text();
 static int running = 1;
 SDL_Surface *screen;
 
-static int softglow = 1;
+static int softglow = 0;
+
+static int fps;
 
 static double eye_angle = 0;
 static int key_dx = 0;
@@ -73,6 +76,7 @@ struct ball {
 	double		x, y;
 	double		dx, dy;
 	int		flags;
+	float		xhist[NBLUR], yhist[NBLUR];
 } ball[MAXBALL];
 int nball = 1;
 
@@ -143,7 +147,9 @@ void glsetup() {
 
 	for(y = 0; y < 12; y++) {
 		for(x = 0; x < 18; x++) {
-			add_brick(x * 16 + 24, y * 16 + 32, 1 + (rand() % 6));
+			if(x != 8 && x != 9 && y != 5 && y != 6) {
+				add_brick(x * 16 + 24, y * 16 + 32, 1 + (rand() % 6));
+			}
 		}
 	}
 }
@@ -187,9 +193,9 @@ void ridge(double angstart, double angend) {
 	glEnd();
 }
 
-void draw_ball(struct ball *b) {
+void draw_ball(double bx, double by, int segments) {
 	double ypos = BALLRADIUS;
-	int x = round(b->x), y = round(b->y);
+	int x = round(bx), y = round(by);
 
 	glPushMatrix();
 	if(x >= -WORLDW / 2
@@ -198,8 +204,8 @@ void draw_ball(struct ball *b) {
 	&& y < WORLDH / 2) {
 		ypos -= SINKHEIGHT * worldmap[y + WORLDH / 2][x + WORLDW / 2].sinkage;
 	}
-	glTranslated(b->x, ypos, b->y);
-	gluSphere(ballquad, BALLRADIUS, 7, 7);
+	glTranslated(bx, ypos, by);
+	gluSphere(ballquad, BALLRADIUS, segments, segments);
 	glPopMatrix();
 }
 
@@ -317,6 +323,9 @@ void drawscene(int with_membrane) {
 			light[1] = (b->color & 2)? .6 : .1;
 			light[2] = (b->color & 4)? .6 : .1;
 			light[3] = 1;
+			light[0] = (light[0] + .5) / 2;
+			light[1] = (light[1] + .4) / 2;
+			light[2] = (light[2] + .1) / 2;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 			/*light[0] = .5;
 			light[1] = .5;
@@ -363,6 +372,9 @@ void drawscene(int with_membrane) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 	ridge(-eye_angle - 10 + 64, -eye_angle + 10 + 64);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+
 	light[0] = 1;
 	light[1] = .6;
 	light[2] = .4;
@@ -370,7 +382,19 @@ void drawscene(int with_membrane) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 
 	for(i = 0; i < nball; i++) {
-		draw_ball(&ball[i]);
+		draw_ball(ball[i].x, ball[i].y, 7);
+	}
+
+	for(j = 0; j < nball; j++) {
+		for(i = 0; i < NBLUR; i++) {
+			light[0] = .1 * (i + 1) / NBLUR;
+			light[1] = .1 * (i + 1) / NBLUR;
+			light[2] = .2 * (i + 1) / NBLUR;
+			light[3] = 1;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
+
+			draw_ball(ball[j].xhist[i], ball[j].yhist[i], 5);
+		}
 	}
 }
 
@@ -473,9 +497,11 @@ void drawframe() {
 
 void draw_text()
 {
-	char	score_str[32];
-	snprintf(score_str, 32, "Score: %d", score);
-	draw_utf_str(font, score_str, 2.f, 4.f);
+	char buf[32];
+	snprintf(buf, sizeof(buf), "Score: %d", score);
+	draw_utf_str(font, buf, 2.f, 4.f);
+	snprintf(buf, sizeof(buf), "%d fps", fps);
+	draw_utf_str(font, buf, 2.f, 100 * 7);
 }
 
 void handle_key(SDLKey key, int down) {
@@ -661,6 +687,10 @@ void physics() {
 				}
 			}
 		}
+		memmove(ball[i].xhist, ball[i].xhist + 1, sizeof(float) * (NBLUR - 1));
+		memmove(ball[i].yhist, ball[i].yhist + 1, sizeof(float) * (NBLUR - 1));
+		ball[i].xhist[NBLUR - 1] = ball[i].x;
+		ball[i].yhist[NBLUR - 1] = ball[i].y;
 	}
 }
 
@@ -684,6 +714,10 @@ int main() {
 	while(running) {
 		SDL_Event event;
 		Uint32 now = SDL_GetTicks();
+
+		if(now != millis) {
+			fps = (fps + (1000 / (now - millis))) / 2;
+		}
 
 		while(now > millis + 10) {
 			physics();
