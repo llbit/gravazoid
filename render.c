@@ -1,0 +1,28 @@
+#include <SDL/SDL_opengl.h>
+#include "ark.h"
+#include "render.h"
+
+void render_shape(shape_t* shape)
+{
+	glViewport(0, 0, WORLDW, WORLDH);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, WORLDW, 0, WORLDH, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_FOG);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glColor3d(.2, .2, .2);
+
+	glBegin(GL_LINES);
+
+	glVertex3f(100.f, 100.f, 0.f);
+	glVertex3f(200.f, 100.f, 0.f);
+	glVertex3f(200.f, 100.f, 0.f);
+	glVertex3f(200.f, 0.f, 0.f);
+
+	glEnd();
+}
