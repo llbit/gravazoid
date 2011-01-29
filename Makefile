@@ -15,6 +15,9 @@ clean:
 	rm text.o
 	rm game
 
+main.o:	main.c ark.h
+	${CC} ${CFLAGS} -c $< -o $@
+
 render.o: render.c
 	${CC} ${CFLAGS} -c $^ -o $@
 
