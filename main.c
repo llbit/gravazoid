@@ -683,7 +683,7 @@ void rotate(double *xp, double *yp, double a) {
 
 void bonus_reset()
 {
-	bigint_set(bonus, 21349512);
+	bigint_set(bonus, 1);
 }
 
 void physics() {
@@ -777,7 +777,7 @@ void load_resources()
 {
 	font = load_font("testfont.ttf", 100.f, 3);
 	score = new_bigint(0);
-	bonus = new_bigint(21349512);
+	bonus = new_bigint(1);
 }
 
 int main() {
@@ -790,7 +790,7 @@ int main() {
 
 	load_resources();
 
-	videosetup(1);
+	videosetup(0);
 	glsetup();
 
 	SDL_ShowCursor(SDL_DISABLE);

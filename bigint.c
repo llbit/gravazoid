@@ -4,7 +4,8 @@
 #include "bigint.h"
 
 #define BIGINT_LIM (10)
-#define BIGINT_RADIX (1000000)
+#define BIGINT_RADIX (10000)
+#define BIGINT_FMT ("%04d")
 
 bigint_t*	new_bigint(unsigned initial)
 {
@@ -73,6 +74,10 @@ void	bigint_add(bigint_t* a, bigint_t* b, bigint_t* c)
 		return;
 	}
 
+	printf("adding bigints:\n");
+	print_bigint(a);
+	print_bigint(b);
+
 	bigint_widen(c, a->n+2);
 
 	// a->n is >= b->n
@@ -82,6 +87,9 @@ void	bigint_add(bigint_t* a, bigint_t* b, bigint_t* c)
 
 	for (; i < a->n+1; ++i)
 		c->d[i] = a->d[i];
+
+	for (i = a->n+1; i < c->lim; ++i)
+		c->d[i] = 0;
 
 	int rem = 0;
 	int carry = 0;
@@ -93,6 +101,9 @@ void	bigint_add(bigint_t* a, bigint_t* b, bigint_t* c)
 		c->d[i] = rem;
 		c->n = i;
 	}
+
+	printf("= ");
+	print_bigint(c);
 }
 
 void	print_bigint(bigint_t* a)
@@ -102,7 +113,7 @@ void	print_bigint(bigint_t* a)
 		if (i == a->n)
 			printf("%d", a->d[i]);
 		else
-			printf("%06d", a->d[i]);
+			printf(BIGINT_FMT, a->d[i]);
 	}
 	printf("\n");
 }
@@ -117,7 +128,7 @@ void	bigint_to_str(bigint_t* a, char* str, int len)
 					"%d", a->d[i]);
 		else
 			off += snprintf(&str[off], len-off,
-					"%06d", a->d[i]);
+					BIGINT_FMT, a->d[i]);
 	}
 }
 
