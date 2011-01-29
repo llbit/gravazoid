@@ -659,7 +659,7 @@ void physics() {
 
 	paddle_vel = (paddle_vel + key_dx * MAX_PADDLE_VEL) / 2;
 
-	eye_angle += paddle_vel * .008;
+	eye_angle += paddle_vel * .018;
 	if(eye_angle >= 256) eye_angle -= 256;
 	if(eye_angle < 0) eye_angle += 256;
 
@@ -747,7 +747,7 @@ int main() {
 	atexit(SDL_Quit);
 
 	font = load_font("testfont.ttf", 100.f, 3);
-	videosetup(0);
+	videosetup(1);
 	glsetup();
 
 	SDL_ShowCursor(SDL_DISABLE);
