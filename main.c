@@ -652,7 +652,7 @@ void physics() {
 
 	paddle_vel = (paddle_vel + key_dx * MAX_PADDLE_VEL) / 2;
 
-	eye_angle += paddle_vel * .01;
+	eye_angle += paddle_vel * .008;
 	if(eye_angle >= 256) eye_angle -= 256;
 	if(eye_angle < 0) eye_angle += 256;
 
