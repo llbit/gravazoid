@@ -4,3 +4,4 @@ game
 *.o
 Session.vim
 gmon.out
+vex
