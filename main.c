@@ -385,6 +385,27 @@ void drawscene(int with_membrane) {
 				glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[k][1], coords[k][2]);
 			}
 			glEnd();
+
+			// draw wirebox
+			glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glDisable(GL_LIGHTING);
+			glDisable(GL_FOG);
+			glColor3f(0, 0, 0);
+			glBegin(GL_QUADS);
+			glVertex3d(coords[0][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[0][1], coords[0][2]);
+			glVertex3d(coords[1][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[1][1], coords[1][2]);
+			glVertex3d(coords[2][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[2][1], coords[2][2]);
+			glVertex3d(coords[3][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[3][1], coords[3][2]);
+			for(j = 0; j < 4; j++) {
+				int k = (j + 1) % 4;
+				glVertex3d(coords[j][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[j][1], coords[j][2]);
+				glVertex3d(coords[j][0], -100, coords[j][2]);
+				glVertex3d(coords[k][0], -100, coords[k][2]);
+				glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * coords[k][1], coords[k][2]);
+			}
+			glEnd();
+			glPopAttrib();
 		}
 	}
 
