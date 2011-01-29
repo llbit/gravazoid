@@ -23,14 +23,20 @@ static SDL_Surface *screen;
 #define INRADIUS 220
 #define OUTRADIUS 230
 #define EYERADIUS 270
+#define BALLRADIUS 6
 #define RIDGEHEIGHT 20
 
 #define MAXBRICK 16
+#define MAXBALL 16
 
 static uint8_t eye_angle = 0;
 static int key_dx = 0;
 
 SDL_sem *semaphore;
+
+GLUquadric *ballquad;
+
+int worldmap_valid;
 
 enum {
 	TEX_GRID,
@@ -49,12 +55,43 @@ struct brick {
 } brick[MAXBRICK];
 int nbrick;
 
+#define BF_HELD		1
+
+struct ball {
+	double		x, y;
+	double		dx, dy;
+	int		flags;
+} ball[MAXBALL];
+int nball = 1;
+
 void add_brick(int x, int y, int color) {
 	if(nbrick == MAXBRICK) errx(1, "MAXBRICK");
 	brick[nbrick].x = x;
 	brick[nbrick].y = y;
 	brick[nbrick].color = color;
 	nbrick++;
+}
+
+void videosetup(int fullscreen) {
+	Uint32 flags = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_OPENGL;
+	SDL_Rect **list;
+	int w, h;
+
+	if(fullscreen) flags |= SDL_FULLSCREEN;
+	list = SDL_ListModes(0, flags | SDL_FULLSCREEN);
+	if(!list) {
+		errx(1, "No usable video modes found");
+	} else if(list == (SDL_Rect **) -1) {
+		w = 640;
+		h = 400;
+	} else {
+		w = list[0]->w;
+		h = list[0]->h;
+	}
+	if(w < WORLDW || h < WORLDH) errx(1, "Largest video mode is too small");
+
+	screen = SDL_SetVideoMode(w, h, 0, flags);
+	if(!screen) errx(1, "Failed to set video mode");
 }
 
 void glsetup() {
@@ -86,6 +123,8 @@ void glsetup() {
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 16, 16, GL_LUMINANCE, GL_UNSIGNED_BYTE, gridtexture);
 	glBindTexture(GL_TEXTURE_2D, TEX_BLOB);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, BLOBSIZE, BLOBSIZE, GL_LUMINANCE, GL_UNSIGNED_BYTE, blobtexture);
+
+	ballquad = gluNewQuadric();
 
 	add_brick(40, 40, 1);
 	add_brick(90, 90, 2);
@@ -156,52 +195,71 @@ void ridge(int angstart, int angend) {
 	glEnd();*/
 }
 
+void draw_ball(struct ball *b) {
+	double ypos = BALLRADIUS;
+	int x = round(b->x), y = round(b->y);
+
+	glPushMatrix();
+	if(x >= -WORLDW / 2
+	&& x < WORLDW / 2
+	&& y >= -WORLDH / 2
+	&& y < WORLDH / 2) {
+		ypos -= SINKHEIGHT * worldmap[y + WORLDH / 2][x + WORLDW / 2].sinkage;
+	}
+	glTranslated(b->x, ypos, b->y);
+	gluSphere(ballquad, BALLRADIUS, 8, 8);
+	glPopMatrix();
+}
+
 void drawframe() {
 	int x, y, i;
 	GLfloat light[4];
 	uint8_t heightmap[WORLDH][WORLDW];
 
-	memset(worldmap, 0, sizeof(worldmap));
-	for(i = 0; i < nbrick; i++) {
-		add_thing(brick[i].x, brick[i].y, brick[i].color);
-	}
-
-	glViewport(0, 0, WORLDW, WORLDH);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, WORLDW, 0, WORLDH, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_FOG);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-	glBindTexture(GL_TEXTURE_2D, TEX_BLOB);
-	glColor3d(.2, .2, .2);
-	glBegin(GL_QUADS);
-	for(i = 0; i < nbrick; i++) {
-		x = brick[i].x;
-		y = brick[i].y;
-		glTexCoord2d(0, 0);
-		glVertex3d(x - BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
-		glTexCoord2d(1, 0);
-		glVertex3d(x + BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
-		glTexCoord2d(1, 1);
-		glVertex3d(x + BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
-		glTexCoord2d(0, 1);
-		glVertex3d(x - BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
-	}
-	glEnd();
-
-	//return;
-	glReadPixels(0, 0, WORLDW, WORLDH, GL_LUMINANCE, GL_UNSIGNED_BYTE, heightmap);
-	for(y = 0; y < WORLDH; y++) {
-		for(x = 0; x < WORLDW; x++) {
-			worldmap[y][x].sinkage = (heightmap[y][x] * heightmap[y][x]) >> 8;
+	if(!worldmap_valid) {
+		memset(worldmap, 0, sizeof(worldmap));
+		for(i = 0; i < nbrick; i++) {
+			add_thing(brick[i].x, brick[i].y, brick[i].color);
 		}
+
+		glViewport(0, 0, WORLDW, WORLDH);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, WORLDW, 0, WORLDH, -1, 1);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_FOG);
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE);
+		glBindTexture(GL_TEXTURE_2D, TEX_BLOB);
+		glColor3d(.2, .2, .2);
+		glBegin(GL_QUADS);
+		for(i = 0; i < nbrick; i++) {
+			x = brick[i].x;
+			y = brick[i].y;
+			glTexCoord2d(0, 0);
+			glVertex3d(x - BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
+			glTexCoord2d(1, 0);
+			glVertex3d(x + BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
+			glTexCoord2d(1, 1);
+			glVertex3d(x + BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
+			glTexCoord2d(0, 1);
+			glVertex3d(x - BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
+		}
+		glEnd();
+		//return;
+
+		glReadPixels(0, 0, WORLDW, WORLDH, GL_LUMINANCE, GL_UNSIGNED_BYTE, heightmap);
+		for(y = 0; y < WORLDH; y++) {
+			for(x = 0; x < WORLDW; x++) {
+				worldmap[y][x].sinkage = (heightmap[y][x] * heightmap[y][x]) >> 8;
+			}
+		}
+		worldmap_valid = 1;
 	}
 
 	glViewport(0, 0, screen->w, screen->h);
@@ -244,29 +302,29 @@ void drawframe() {
 	glTexCoord2d(WORLDW * GRIDSCALE, -BORDER * GRIDSCALE);
 	glVertex3d(+BORDER + WORLDW / 2, 0, -BORDER - WORLDH / 2);
 	glTexCoord2d(+(WORLDW + BORDER) * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(+WORLDW / 2, 0, -BORDER - WORLDH / 2);
+	glVertex3d(+(WORLDW - 1) / 2, 0, -BORDER - WORLDH / 2);
 	glTexCoord2d(+(WORLDW + BORDER) * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(+WORLDW / 2, 0, +BORDER + WORLDH / 2);
+	glVertex3d(+(WORLDW - 1) / 2, 0, +BORDER + WORLDH / 2);
 	glTexCoord2d(WORLDW * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
 	glVertex3d(+BORDER + WORLDW / 2, 0, +BORDER + WORLDH / 2);
 
 	glTexCoord2d(0, -BORDER * GRIDSCALE);
 	glVertex3d(-WORLDW / 2, 0, -BORDER - WORLDH / 2);
 	glTexCoord2d(+WORLDW * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(+WORLDW / 2, 0, -BORDER - WORLDH / 2);
+	glVertex3d(+(WORLDW - 1) / 2, 0, -BORDER - WORLDH / 2);
 	glTexCoord2d(+WORLDW * GRIDSCALE, 0);
-	glVertex3d(+WORLDW / 2, 0, -WORLDH / 2);
+	glVertex3d(+(WORLDW - 1) / 2, 0, -WORLDH / 2);
 	glTexCoord2d(0, 0);
 	glVertex3d(-WORLDW / 2, 0, -WORLDH / 2);
 
 	glTexCoord2d(0, +(WORLDH + BORDER) * GRIDSCALE);
 	glVertex3d(-WORLDW / 2, 0, +BORDER + WORLDH / 2);
 	glTexCoord2d(+WORLDW * GRIDSCALE, +(WORLDH + BORDER) * GRIDSCALE);
-	glVertex3d(+WORLDW / 2, 0, +BORDER + WORLDH / 2);
+	glVertex3d(+(WORLDW - 1) / 2, 0, +BORDER + WORLDH / 2);
 	glTexCoord2d(+WORLDW * GRIDSCALE, +WORLDH * GRIDSCALE);
-	glVertex3d(+WORLDW / 2, 0, +WORLDH / 2);
+	glVertex3d(+(WORLDW - 1) / 2, 0, +(WORLDH - 1) / 2);
 	glTexCoord2d(0, +WORLDH * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, +WORLDH / 2);
+	glVertex3d(-WORLDW / 2, 0, +(WORLDH - 1) / 2);
 
 	glEnd();
 
@@ -381,9 +439,21 @@ void drawframe() {
 	light[3] = 1;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 	ridge(-eye_angle - 10 + 64, -eye_angle + 10 + 64);
+
+	light[0] = 1;
+	light[1] = .6;
+	light[2] = .4;
+	light[3] = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
+
+	for(i = 0; i < nball; i++) {
+		draw_ball(&ball[i]);
+	}
 }
 
 void handle_key(SDLKey key, int down) {
+	int i;
+
 	switch(key) {
 		case SDLK_q:
 			running = 0;
@@ -402,13 +472,57 @@ void handle_key(SDLKey key, int down) {
 				if(key_dx == 1) key_dx = 0;
 			}
 			break;
+		case SDLK_SPACE:
+			for(i = 0; i < nball; i++) {
+				if(ball[i].flags & BF_HELD) {
+					ball[i].flags &= ~BF_HELD;
+					ball[i].dx = -ball[i].x / (INRADIUS - BALLRADIUS);
+					ball[i].dy = -ball[i].y / (INRADIUS - BALLRADIUS);
+				}
+			}
+			break;
 		default:
 			break;
 	}
 }
 
 void physics() {
-	eye_angle += key_dx;
+	int i, j;
+	double r;
+
+	eye_angle += key_dx * 2;
+
+	for(i = 0; i < nball; i++) {
+		if(ball[i].flags & BF_HELD) {
+			ball[i].x = (INRADIUS - BALLRADIUS) * cos((64 - eye_angle) * M_PI * 2 / 256);
+			ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
+			ball[i].dx = ball[i].dy = 0;
+		} else {
+			for(j = 0; j < nbrick; j++) {
+				double xdiff = (brick[j].x - WORLDW / 2) - ball[i].x;
+				double ydiff = (brick[j].y - WORLDH / 2) - ball[i].y;
+				double dist2 = xdiff * xdiff + ydiff * ydiff;
+				if(dist2 && dist2 < 100) {
+					ball[i].dx += xdiff / dist2;
+					ball[i].dy += ydiff / dist2;
+				}
+			}
+			if(ball[i].dx || ball[i].dy) {
+				double size = hypot(ball[i].dx, ball[i].dy);
+				if(size < 1) {
+					ball[i].dx /= size;
+					ball[i].dy /= size;
+				}
+			}
+			ball[i].x += ball[i].dx;
+			ball[i].y += ball[i].dy;
+			r = hypot(ball[i].x, ball[i].y);
+			if(r > INRADIUS) {
+				ball[i].dx = -ball[i].dx;
+				ball[i].dy = -ball[i].dy;
+			}
+		}
+	}
 }
 
 int main() {
@@ -417,11 +531,14 @@ int main() {
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
 
-	screen = SDL_SetVideoMode(640, 400, 0, SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_OPENGL);
-	if(!screen) errx(1, "SDL_SetVideoMode");
-
+	videosetup(0);
 	glsetup();
 
+	SDL_ShowCursor(SDL_DISABLE);
+
+	ball[0].flags = BF_HELD;
+
+	physics();
 	millis = SDL_GetTicks();
 
 	while(running) {
