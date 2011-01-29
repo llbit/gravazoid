@@ -5,20 +5,8 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
 
-static int running = 1;
-static SDL_Surface *screen;
-
-#define WORLDH 240
-#define WORLDW 320
-
-#define BORDER 512
-
-#define GRIDSCALE .06
-#define HEIGHTSCALE 20
-#define NORMSCALE .1
-#define BLOBSIZE 64
-#define SINKHEIGHT .3
-#define SINKHEIGHTTOP .3
+#include "ark.h"
+#include "render.h"
 
 #define INRADIUS 220
 #define OUTRADIUS 230
@@ -28,6 +16,11 @@ static SDL_Surface *screen;
 
 #define MAXBRICK 16
 #define MAXBALL 16
+
+static void draw_text();
+
+static int running = 1;
+static SDL_Surface *screen;
 
 static uint8_t eye_angle = 0;
 static int key_dx = 0;
@@ -494,6 +487,18 @@ void drawframe() {
 	for(i = 0; i < nball; i++) {
 		draw_ball(&ball[i]);
 	}
+}
+
+void draw_text()
+{
+	shape_t*	shape = new_shape();
+	shape_add_vec(shape, 100.f, 100.f);
+	shape_add_vec(shape, 200.f, 100.f);
+	shape_add_vec(shape, 200.f, 100.f);
+	shape_add_vec(shape, 200.f, 0.f);
+	shape_add_seg(shape, 0, 1);
+	shape_add_seg(shape, 2, 3);
+	render_shape(shape);
 }
 
 void handle_key(SDLKey key, int down) {

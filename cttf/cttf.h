@@ -19,12 +19,14 @@
  * see cttf.c for version history
  */
 
-#ifndef cttf
-#define cttf
+#ifndef CTTF_CTTF_H
+#define CTTF_CTTF_H
 
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "vector.h"
+#include "shape.h"
 
 #if 1
 #define SWAP_ENDIAN_WORD(a) \
@@ -65,11 +67,18 @@ void ttf_gd_list_add(
 		ttf_gd_list_t**		list,
 		ttf_glyph_data_t*	data);
 void ttf_free_gd_list(ttf_gd_list_t**	obj);
+void ttf_interpolate(
+		ttf_t*			ttfobj,
+		uint16_t		chr,
+		vector_t**		points,
+		uint16_t**		endpoints,
+		float			scale);
 
-typedef struct ttf_vector {
-	float	x;
-	float	y;
-} ttf_vector_t;
+// export a TTF character to a vector list
+void ttf_export_chr_shape(
+		ttf_t*			ttfobj,
+		uint16_t		chr,
+		shape_t*		shape);
 
 struct ttf_gd_list {
 	ttf_gd_list_t*		succ;
@@ -324,10 +333,6 @@ private:
 	void ReadGlyph(cFile&, ttf_glyph_header_t&, ttf_glyph_data_t&, ttf_table_header_t&, uint32_t*, uint32_t);
 	uint16_t Interpolate(uint16_t, jsh::vector2<t_real>*, jsh::vector2<t_real>*, uint16_t&, uint16_t) const;
 	void ttf_set_ls_aw(ttf_glyph_header_t&, ttf_glyph_data_t&, uint16_t);
-	void GotoTable(cFile& file, ttf_table_header_t& table) {
-		table.offset = SWAP_ENDIAN_dword(table.offset);
-		file.SeekOffset(table.offset);
-	}
 	void Interpolate(uint16_t c, jsh::vector2<t_real>*& points, uint16_t*& endpoints, uint16_t& npoints, precision scale) const;
 };*/
 

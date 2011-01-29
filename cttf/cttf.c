@@ -441,6 +441,8 @@ found_platform:
 				&glyf, indextolocation, i);
 	}
 	free(indextolocation);
+
+	return ttfobj;
 }
 
 /*
@@ -607,7 +609,7 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 		memset(endpoints, 0, ncontours << 1);
 
 		ttf_gd_list_t* p = components;
-		int i;
+		int i = 0;
 		while (p != NULL) {
 			component = p->data;
 			olim = component->ncontours - 1;
@@ -781,42 +783,44 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 	free(simple.flags);
 }
 
-/*
- * Export the glyph as a mesh.
- */
-/*void cTTF::Convert(cMesh& mesh, uint16_t c)
+void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape)
 {
-	if (interpolation_level) {
+	if (ttfobj->interpolation_level) {
 		// interpolate the curves
-		jsh::vector2<t_real>* points;
-		uint16_t* endpoints;
-		uint16_t npoints;
-		Interpolate(c, points, endpoints, npoints, 1.f/upem);
+		vector_t*	points;
+		uint16_t*	endpoints;
 
-		uint16_t lim = 0, e, p = 0, p2 = 0, origin;
-		for (e = 0; e < glyph_data[glyph_table[c]].ncontours; e++) {
+		ttf_interpolate(ttfobj, chr, &points, &endpoints,
+				1.f/(float)ttfobj->upem);
+
+		uint16_t	lim = 0;
+		uint16_t	e;
+		uint16_t	p = 0;
+		//uint16_t	p2 = 0;
+		uint16_t	origin;
+		for (e = 0; e < ttfobj->glyph_data[ttfobj->glyph_table[chr]].ncontours; e++) {
 			lim += endpoints[e];
 			origin = p;
-			for (; p < lim; p++)
-			{
-                mesh.AddPoint(points[p].x, points[p].y);
-                if (p < (lim - 1))
-			mesh.AddLink(p, p+1);
-                else mesh.AddLink(p, origin);
+			for (; p < lim; p++) {
+				shape_add_vec(shape, points[p].x, points[p].y);
+                		if (p < (lim - 1))
+					shape_add_seg(shape, p, p+1);
+                		else
+					shape_add_seg(shape, p, origin);
 			}
 		}
-		delete[] points;
-		delete[] endpoints;
+		free(points);
+		free(endpoints);
 	}
-}*/
+}
 
 static uint16_t ttf_interpolate_chr(
-		ttf_t* ttfobj,
-		uint16_t chr,
-		ttf_vector_t* cpoints,
-		ttf_vector_t* points,
-		uint16_t* cpind,
-		uint16_t e)
+		ttf_t*		ttfobj,
+		uint16_t	chr,
+		vector_t*	cpoints,
+		vector_t*	points,
+		uint16_t*	cpind,
+		uint16_t	e)
 {
 	/*
  	 * This is a quadric Bezier curve interpolation algorithm using a
@@ -835,9 +839,9 @@ static uint16_t ttf_interpolate_chr(
 
 	// if any state is true that means that the current point is on the curve
 	bool ls = states[lastpoint], cs, ns = states[firstpoint];
-	ttf_vector_t	lp = points[lastpoint];
-	ttf_vector_t	cp;
-	ttf_vector_t	np = points[firstpoint];
+	vector_t	lp = points[lastpoint];
+	vector_t	cp;
+	vector_t	np = points[firstpoint];
 
 	uint16_t	c;
 	float		cx;
@@ -855,7 +859,7 @@ static uint16_t ttf_interpolate_chr(
 	oc = mm;
 	oo1 = 2.f*mm;
 	oo2 = -4.f*mm;
-	ttf_vector_t	ip1, ip2;
+	vector_t	ip1, ip2;
 	uint16_t addon = *cpind;
 	bool cont = true;
 	do {
@@ -1005,26 +1009,33 @@ void ttf_set_ls_aw(ttf_t* ttfobj,
 /*
  * Transform the interpolated coordinates to the correct unit.
  */
-/*void ttf_interpolate(
+void ttf_interpolate(
 		ttf_t*		ttfobj,
-		uint16_t	c,
-		ttf_vector_t**	points,
+		uint16_t	chr,		// character code
+		vector_t**	points,
 		uint16_t**	endpoints,
-		uint16_t	npoints,
 		float		scale)
 {
-	ttf_vector_t*	cpoints;
+	uint16_t	contour;
+	uint16_t	point;
+	uint16_t	cpind = 0;
 
-	cpoints = malloc(sizeof(ttf_vector_t) * ttfobj->glyph_data[ttfobj->glyph_table[c]].npoints);
-	points = new jsh::vector2<t_real>[glyph_data[glyph_table[c]].npoints * interpolation_level];
-	endpoints = new uint16_t[glyph_data[glyph_table[c]].ncontours];
-	uint16_t contour, point, cpind = 0;
-	for (contour = 0, point = 0; contour < glyph_data[glyph_table[c]].ncontours; contour++) {
-		for (; point <= glyph_data[glyph_table[c]].endpoints[contour]; point++) {
-			cpoints[point].x = scale * (glyph_data[glyph_table[c]].px[point] - glyph_data[glyph_table[c]].lsb);
-			cpoints[point].y = scale * glyph_data[glyph_table[c]].py[point];
+	vector_t*		cpoints;
+	ttf_glyph_data_t*	glyph;
+
+	glyph = &(ttfobj->glyph_data[ttfobj->glyph_table[chr]]);
+	cpoints = malloc(sizeof(vector_t) * glyph->npoints);
+	*points = malloc(sizeof(vector_t) * glyph->npoints * ttfobj->interpolation_level);
+	*endpoints = malloc(sizeof(uint16_t) * glyph->ncontours);
+
+	for (contour = 0, point = 0; contour < glyph->ncontours; contour++) {
+		for (; point <= glyph->endpoints[contour]; point++) {
+			cpoints[point].x = scale * (glyph->px[point] - glyph->lsb);
+			cpoints[point].y = scale * glyph->py[point];
 		}
-		endpoints[contour] = ttf_interpolate_chr(c, points, cpoints, cpind, contour);
+		(*endpoints)[contour] = ttf_interpolate_chr(
+				ttfobj, chr, *points,
+				cpoints, &cpind, contour);
 	}
-	delete[] cpoints;
-}*/
+	free(cpoints);
+}
