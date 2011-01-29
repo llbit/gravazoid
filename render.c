@@ -3,25 +3,8 @@
 #include "ark.h"
 #include "render.h"
 
-extern SDL_Surface *screen;
-
-void render_shape(shape_t* shape, float x, float y)
+void render_shape(shape_t* shape)
 {
-	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
-	//glViewport(0, 0, screen->w, screen->h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, screen->w, 0, screen->h, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef(x, y, 0.f);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_FOG);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
-	glColor3f(1.f, 1.f, 1.f);
-
 	glBegin(GL_LINES);
 
 	for (int i = 0; i < shape->nseg; ++i) {
@@ -35,7 +18,6 @@ void render_shape(shape_t* shape, float x, float y)
 	}
 
 	glEnd();
-	glPopAttrib();
 }
 
 void render_brick(int coords[4][2], int y)

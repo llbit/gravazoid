@@ -10,7 +10,7 @@ shape_t* new_shape();
 void free_shape(shape_t** shape);
 void shape_add_vec(shape_t* shape, float x, float y);
 void shape_add_seg(shape_t* shape, int n, int m);
-//shape_t* parse_shape(FILE* file);
+shape_t* load_shape(FILE* file);
 
 struct shape {
 	vector_t*	vec;

@@ -1,7 +1,11 @@
+#include <SDL/SDL.h>
+#include <SDL/SDL_opengl.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "text.h"
 #include "render.h"
+
+extern SDL_Surface *screen;
 
 vfont_t* load_font(const char* name, float scale, int ipl)
 {
@@ -56,14 +60,33 @@ void draw_utf_str(vfont_t* font, const char* str, float x, float y)
 {
 	if (font == NULL) return;
 
+	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
+	//glViewport(0, 0, screen->w, screen->h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, screen->w, 0, screen->h, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_FOG);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glColor3f(1.f, 1.f, 1.f);
+
 	const char* p = str;
 	float xoff = 0.f;
 	while (*p != '\0') {
 		uint16_t chr = (uint16_t)*p;
 		if (font->chr[chr] == NULL)
 			font_load_chr(font, chr);
-		render_shape(font->chr[chr], x+xoff, y);
+		glPushMatrix();
+		glTranslatef(x+xoff, y, 0.f);
+		render_shape(font->chr[chr]);
+		glPopMatrix();
 		xoff += font->scale * ttf_get_chr_width(font->ttf, chr);
 		p += 1;
 	}
+
+	glPopAttrib();
 }

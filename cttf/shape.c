@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 #include "shape.h"
 #include "vector.h"
 
@@ -66,5 +67,43 @@ void shape_add_seg(shape_t* shape, int n, int m)
 	shape->seg[shape->nseg*2] = n;
 	shape->seg[shape->nseg*2 + 1] = m;
 	shape->nseg += 1;
+}
+
+shape_t* load_shape(FILE* file)
+{
+	char	buf[64];
+
+	assert(file != NULL);
+
+	shape_t* shape = new_shape();
+
+	while (1 == fread(buf, 3, 1, file)) {
+		buf[3] = '\0';
+		if (!strcmp(buf, "v: ")) {
+			float	x;
+			float	y;
+			// this is a vector
+			if (2 != fscanf(file, "%f, %f\n", &x, &y)) {
+				fprintf(stderr, "could not parse shape file\n");
+				return NULL;
+			}
+			shape_add_vec(shape, x, y);
+
+		} else if (!strcmp(buf, "s: ")) {
+			int	n;
+			int	m;
+			// this is a segment
+			if (2 != fscanf(file, "%d, %d\n", &n, &m)) {
+				fprintf(stderr, "could not parse shape file\n");
+				return NULL;
+			}
+			shape_add_seg(shape, n, m);
+		} else {
+			// error!
+			fprintf(stderr, "unexpected character sequence in shape file: %3s\n", buf);
+			return NULL;
+		}
+	}
+	return shape;
 }
 

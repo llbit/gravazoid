@@ -10,6 +10,9 @@
 #include "render.h"
 #include "text.h"
 #include "bigint.h"
+#include "cttf/shape.h"
+
+static shape_t* testshape = NULL;
 
 static int colors[][3] = {
 	{0x65, 0x9D, 0xFD}, // light blue
@@ -20,6 +23,8 @@ static int colors[][3] = {
 	{0xB6, 0xDE, 0xFF}, // pale blue
 
 };
+
+static int ball_color[3] = { 0x33, 0x8C, 0x5C };
 
 static void draw_text();
 
@@ -391,9 +396,9 @@ void drawscene(int with_membrane) {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
-	light[0] = 1;
-	light[1] = .6;
-	light[2] = .4;
+	light[0] = ball_color[0] / 255.0;
+	light[1] = ball_color[1] / 255.0;
+	light[2] = ball_color[2] / 255.0;
 	light[3] = 1;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 
@@ -528,6 +533,24 @@ void draw_text() {
 	if(gameover) {
 		draw_utf_str(font, "game over", screen->w / 2 - 270, screen->h / 2);
 	}
+
+	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
+	//glViewport(0, 0, screen->w, screen->h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, 1, 0, 1, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_FOG);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glColor3f(1.f, 1.f, 1.f);
+
+	//render_shape(testshape);
+
+	glPopAttrib();
 }
 
 void handle_key(SDLKey key, int down) {
@@ -727,6 +750,10 @@ void physics() {
 
 void load_resources()
 {
+	/*FILE*	fp;
+	fp = fopen("test.shape", "r");
+	if (fp != NULL)
+		testshape = load_shape(fp);*/
 	font = load_font("testfont.ttf", 100.f, 3);
 	score = new_bigint(0);
 	bonus = new_bigint(1);

@@ -16,8 +16,8 @@ static shape_t*	shape;
 static int	curr = 0;
 static int	pred = -1;
 static int	first = -1;
-static int	cx = -1;
-static int	cy = -1;
+static float	cx = -1;
+static float	cy = -1;
 
 SDL_Surface*	screen;
 static bool	running = true;
@@ -40,6 +40,20 @@ void videosetup()
 		errx(1, "Failed to set video mode");
 
 	SDL_ShowCursor(SDL_ENABLE);
+
+	glViewport(0, 0, screen->w, screen->h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, 1, 0, 1, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_FOG);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+	glColor3f(1.f, 1.f, 1.f);
+
 }
 
 int main(int argc, const char** argv)
@@ -68,7 +82,8 @@ int main(int argc, const char** argv)
 void render()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	render_shape(shape, 0.f, 0.f);
+
+	render_shape(shape);
 	if (first != -1) {
 		glPushAttrib(GL_COLOR_BUFFER_BIT);
 		glColor3f(0.84f, 0.84f, 0.84f);
@@ -76,7 +91,7 @@ void render()
 		glVertex3f(shape->vec[shape->nvec-1].x,
 				shape->vec[shape->nvec-1].y,
 				0.f);
-		glVertex3f((float)cx, (float)cy, 0.f);
+		glVertex3f(cx, cy, 0.f);
 		glEnd();
 		glPopAttrib();
 	}
@@ -94,8 +109,8 @@ void handle_event(SDL_Event* event)
 						WINDOW_H - event->button.y);
 			break;
 		case SDL_MOUSEMOTION:
-			cx = event->motion.x;
-			cy = WINDOW_H - event->motion.y;
+			cx = event->motion.x / (float) WINDOW_W;
+			cy = (WINDOW_H - event->motion.y) / (float) WINDOW_H;
 			break;
 		case SDL_KEYDOWN:
 			handle_key(event->key.keysym.sym, 1);
@@ -107,11 +122,12 @@ void handle_event(SDL_Event* event)
 	}
 }
 
-void on_left_click(int x, int y)
+void on_left_click(int ix, int iy)
 {
+	float	x = ix / (float) WINDOW_W;
+	float	y = iy / (float) WINDOW_H;
 	shape_add_vec(shape, x, y);
-	printf("v: %f, %f\n", x / (float)WINDOW_W,
-			y / (float)WINDOW_H);
+	printf("v: %f, %f\n", x, y);
 
 	if (pred >= 0) {
 		shape_add_seg(shape, pred, curr);
@@ -127,6 +143,7 @@ void on_right_click(int x, int y)
 {
 	if (first != -1) {
 		shape_add_seg(shape, pred, first);
+		printf("s: %d, %d\n", pred, first);
 		first = -1;
 		pred = -1;
 	}
