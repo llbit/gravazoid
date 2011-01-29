@@ -175,10 +175,8 @@ void resetlevel(int restart) {
 	}
 	bricks_left = nbrick;
 
-	lives = 5;
 	if(restart) {
 		bigint_set(score, 0);
-		score = 0;
 		lives = 5;
 	}
 
@@ -631,17 +629,14 @@ void mirror(double *x1, double *y1, double x2, double y2) {
 void removebrick(struct brick *b) {
 	b->flags &= ~BRICKF_LIVE;
 	worldmap_valid = 0;
-<<<<<<< HEAD:main.c
-	bigint_add(score, bonus, score);
-	bigint_add(bonus, bonus, bonus);
-=======
-	score += bonus;
-	bonus *= 2;
+
 	bricks_left--;
 	if(!bricks_left) {
 		resetlevel(0);
 	}
->>>>>>> 76194be66743d5583e2abd14ba3a27e38c3f6ca1:main.c
+
+	bigint_add(score, bonus, score);
+	bigint_add(bonus, bonus, bonus);
 }
 
 int collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
