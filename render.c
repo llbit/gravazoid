@@ -8,7 +8,7 @@ extern SDL_Surface *screen;
 void render_shape(shape_t* shape, float x, float y)
 {
 	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
-	glViewport(0, 0, screen->w, screen->h);
+	//glViewport(0, 0, screen->w, screen->h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, screen->w, 0, screen->h, -1, 1);
