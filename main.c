@@ -18,7 +18,7 @@
 #define BALLSPEED 2.1
 #define GRAVITY 0.002
 
-#define MEMBRANESTEP 6
+#define MEMBRANESTEP 7
 
 #define MAX_PADDLE_VEL 100
 
@@ -208,7 +208,7 @@ void drawmembrane() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	glColor3d(.1, .1, .3);
+	glColor3d(.15, .10, .2);
 	glDisable(GL_CULL_FACE);
 	glBegin(GL_QUADS);
 
@@ -271,7 +271,7 @@ void drawmembrane() {
 	}
 }
 
-void drawscene() {
+void drawscene(int with_membrane) {
 	int i, j;
 	GLfloat light[4];
 
@@ -296,14 +296,14 @@ void drawscene() {
 	glFogf(GL_FOG_START, 200);
 	glFogf(GL_FOG_END, 600);
 
-	drawmembrane();
+	if(with_membrane) drawmembrane();
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	light[0] = 150 * sin(eye_angle * M_PI * 2 / 256);
 	light[1] = 180;
 	light[2] = 150 * cos(eye_angle * M_PI * 2 / 256);
-	light[3] = 1;
+	light[3] = 0;
 	glLightfv(GL_LIGHT0, GL_POSITION, light);
 	glEnable(GL_NORMALIZE);
 	for(i = 0; i < nbrick; i++) {
@@ -370,8 +370,6 @@ void drawscene() {
 	for(i = 0; i < nball; i++) {
 		draw_ball(&ball[i]);
 	}
-
-	draw_text();
 }
 
 void drawframe() {
@@ -423,7 +421,7 @@ void drawframe() {
 	}
 
 	glViewport(0, 0, screen->w / 2, screen->h / 2);
-	drawscene();
+	drawscene(1);
 	glReadPixels(0, 0, screen->w / 2, screen->h / 2, GL_RGB, GL_UNSIGNED_BYTE, overlay);
 	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, TEX_OVERLAY);
 	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB, screen->w / 2, screen->h / 2, 0, GL_RGB, GL_UNSIGNED_BYTE, overlay);
@@ -431,7 +429,7 @@ void drawframe() {
 	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	glViewport(0, 0, screen->w, screen->h);
-	drawscene();
+	drawscene(1);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -447,8 +445,8 @@ void drawframe() {
 	glBlendFunc(GL_ONE, GL_ONE);
 	glEnable(GL_TEXTURE_RECTANGLE_ARB);
 	glBegin(GL_QUADS);
-	for(y = -6; y <= 6; y += 3) {
-		for(x = -6; x <= 6; x += 3) {
+	for(y = -4; y <= 4; y += 2) {
+		for(x = -4; x <= 4; x += 2) {
 			if(x || y) {
 				glTexCoord2d(x, y);
 				glVertex3d(0, 0, 0);
@@ -463,6 +461,8 @@ void drawframe() {
 	}
 	glEnd();
 	glDisable(GL_TEXTURE_RECTANGLE_ARB);
+
+	draw_text();
 }
 
 void draw_text()

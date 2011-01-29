@@ -6,7 +6,7 @@
 
 #define BORDER 512
 
-#define GRIDSCALE .16
+#define GRIDSCALE .12
 #define HEIGHTSCALE 20
 #define NORMSCALE .1
 #define BLOBSIZE 64
