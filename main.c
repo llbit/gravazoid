@@ -11,13 +11,15 @@
 #define INRADIUS 230
 #define OUTRADIUS 240
 #define EYERADIUS 270
-#define BALLRADIUS 6
+#define BALLRADIUS 4
 #define RIDGEHEIGHT 20
 
-#define BALLSPEED 2
+#define BALLSPEED 1.5
 #define GRAVITY 0.002
 
 #define MEMBRANESTEP 4
+
+#define MAX_PADDLE_VEL 100
 
 #define MAXBRICK 256
 #define MAXBALL 16
@@ -27,8 +29,9 @@ static void draw_text();
 static int running = 1;
 static SDL_Surface *screen;
 
-static uint8_t eye_angle = 0;
+static double eye_angle = 0;
 static int key_dx = 0;
+static int paddle_vel = 0;
 
 SDL_sem *semaphore;
 
@@ -140,8 +143,8 @@ void glsetup() {
 	dest[2] = a[0] * b[1] - a[1] * b[0];
 }*/
 
-void ridge(int angstart, int angend) {
-	int i;
+void ridge(double angstart, double angend) {
+	double i;
 
 	glNormal3d(0, 1, 0);
 	glBegin(GL_QUAD_STRIP);
@@ -363,9 +366,9 @@ void drawframe() {
 		if(b->flags & BRICKF_LIVE) {
 			int coords[4][3];
 
-			light[0] = (b->color & 1)? 1 : 0;
-			light[1] = (b->color & 2)? 1 : 0;
-			light[2] = (b->color & 4)? 1 : 0;
+			light[0] = (b->color & 1)? .9 : .1;
+			light[1] = (b->color & 2)? .9 : .1;
+			light[2] = (b->color & 4)? .9 : .1;
 			light[3] = 1;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 			light[0] = 1;
@@ -616,7 +619,11 @@ void physics() {
 	double r, size;
 	double prevx, prevy;
 
-	eye_angle += key_dx;
+	paddle_vel = (paddle_vel + key_dx * MAX_PADDLE_VEL) / 2;
+
+	eye_angle += paddle_vel * .01;
+	if(eye_angle >= 256) eye_angle -= 256;
+	if(eye_angle < 0) eye_angle += 256;
 
 	for(i = 0; i < nball; i++) {
 		if(ball[i].flags & BALLF_HELD) {
@@ -636,8 +643,13 @@ void physics() {
 				}
 			}
 			size = hypot(ball[i].dx, ball[i].dy);
-			ball[i].dx /= size;
-			ball[i].dy /= size;
+			if(size < .01) {
+				ball[i].dx += (rand() & 1)? 1 : -1;
+				ball[i].dy += (rand() & 1)? 1 : -1;
+			} else {
+				ball[i].dx /= size;
+				ball[i].dy /= size;
+			}
 			prevx = ball[i].x;
 			prevy = ball[i].y;
 			ball[i].x += ball[i].dx * BALLSPEED;
@@ -660,7 +672,7 @@ void physics() {
 					} else {
 						double normx = ball[i].x;
 						double normy = ball[i].y;
-						rotate(&normx, &normy, -angdiff * 1);
+						rotate(&normx, &normy, -angdiff * 2);
 						mirror(&ball[i].dx, &ball[i].dy, normx, normy);
 						ball[i].x = prevx;
 						ball[i].y = prevy;
