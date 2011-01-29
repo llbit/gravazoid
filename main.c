@@ -26,6 +26,16 @@
 #define MAXBRICK 256
 #define MAXBALL 16
 
+static int colors[][3] = {
+	{0x65, 0x9D, 0xFD}, // light blue
+	{0x63, 0x7E, 0x9A}, // dark blue
+	{0x40, 0x4A, 0xE1}, // bright blue
+	{0xDA, 0x0D, 0x18}, // bright red
+	{0x8F, 0x09, 0x00}, // dark red
+	{0xB6, 0xDE, 0xFF}, // pale blue
+
+};
+
 static void draw_text();
 
 static int running = 1;
@@ -33,7 +43,7 @@ SDL_Surface *screen;
 
 static int softglow = 0;
 
-static int fps;
+static int fps = 0;
 
 static double eye_angle = 0;
 static int key_dx = 0;
@@ -157,7 +167,7 @@ void resetlevel() {
 	for(y = 0; y < 12; y++) {
 		for(x = 0; x < 18; x++) {
 			if(x != 8 && x != 9 && y != 5 && y != 6) {
-				add_brick(x * 16 + 24, y * 16 + 32, 1 + (rand() % 6));
+				add_brick(x * 16 + 24, y * 16 + 32, rand() % 6);
 			}
 		}
 	}
@@ -335,13 +345,10 @@ void drawscene(int with_membrane) {
 		if(b->flags & BRICKF_LIVE) {
 			int coords[4][3];
 
-			light[0] = (b->color & 1)? .6 : .1;
-			light[1] = (b->color & 2)? .6 : .1;
-			light[2] = (b->color & 4)? .6 : .1;
+			light[0] = colors[b->color][0] / 255.;
+			light[1] = colors[b->color][1] / 255.;
+			light[2] = colors[b->color][2] / 255.;
 			light[3] = 1;
-			light[0] = (light[0] + .5) / 2;
-			light[1] = (light[1] + .4) / 2;
-			light[2] = (light[2] + .1) / 2;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 			/*light[0] = .5;
 			light[1] = .5;
@@ -732,7 +739,9 @@ void physics() {
 }
 
 int main() {
-	Uint32 millis;
+	int	time = 0;
+	int	frames = 0;
+	Uint32	millis;
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
@@ -752,8 +761,10 @@ int main() {
 		SDL_Event event;
 		Uint32 now = SDL_GetTicks();
 
-		if(now != millis) {
-			fps = (fps + (1000 / (now - millis))) / 2;
+		time += now - millis;
+		if (time >= 1000) {
+			fps = (int) (frames / (time / 1000.f));
+			frames = time = 0;
 		}
 
 		while(now > millis + 10) {
@@ -762,6 +773,7 @@ int main() {
 		}
 
 		drawframe();
+		frames++;
 
 		SDL_GL_SwapBuffers();
 		while(SDL_PollEvent(&event)) {
