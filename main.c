@@ -8,6 +8,8 @@
 #include "ark.h"
 #include "render.h"
 
+static void draw_text();
+
 static int running = 1;
 static SDL_Surface *screen;
 
@@ -365,7 +367,21 @@ void drawframe() {
 	light[3] = 1;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 	ridge(-eye_angle - 10 + 64, -eye_angle + 10 + 64);
-	render_shape(NULL);
+
+	// TODO
+	//draw_text();
+}
+
+void draw_text()
+{
+	shape_t*	shape = new_shape();
+	shape_add_vec(shape, 100.f, 100.f);
+	shape_add_vec(shape, 200.f, 100.f);
+	shape_add_vec(shape, 200.f, 100.f);
+	shape_add_vec(shape, 200.f, 0.f);
+	shape_add_seg(shape, 0, 1);
+	shape_add_seg(shape, 2, 3);
+	render_shape(shape);
 }
 
 void handle_key(SDLKey key, int down) {
