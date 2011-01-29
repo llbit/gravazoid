@@ -30,6 +30,8 @@ static void draw_text();
 static int running = 1;
 SDL_Surface *screen;
 
+static int softglow = 1;
+
 static double eye_angle = 0;
 static int key_dx = 0;
 static int paddle_vel = 0;
@@ -420,47 +422,51 @@ void drawframe() {
 		worldmap_valid = 1;
 	}
 
-	glViewport(0, 0, screen->w / 2, screen->h / 2);
-	drawscene(1);
-	glReadPixels(0, 0, screen->w / 2, screen->h / 2, GL_RGB, GL_UNSIGNED_BYTE, overlay);
-	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, TEX_OVERLAY);
-	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB, screen->w / 2, screen->h / 2, 0, GL_RGB, GL_UNSIGNED_BYTE, overlay);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	if(softglow) {
+		glViewport(0, 0, screen->w / 2, screen->h / 2);
+		drawscene(1);
+		glReadPixels(0, 0, screen->w / 2, screen->h / 2, GL_RGB, GL_UNSIGNED_BYTE, overlay);
+		glBindTexture(GL_TEXTURE_RECTANGLE_ARB, TEX_OVERLAY);
+		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGB, screen->w / 2, screen->h / 2, 0, GL_RGB, GL_UNSIGNED_BYTE, overlay);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
 
 	glViewport(0, 0, screen->w, screen->h);
 	drawscene(1);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, 1, 0, 1, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_FOG);
-	glDisable(GL_CULL_FACE);
-	glColor3d(.05, .05, .05);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_ONE, GL_ONE);
-	glEnable(GL_TEXTURE_RECTANGLE_ARB);
-	glBegin(GL_QUADS);
-	for(y = -4; y <= 4; y += 2) {
-		for(x = -4; x <= 4; x += 2) {
-			if(x || y) {
-				glTexCoord2d(x, y);
-				glVertex3d(0, 0, 0);
-				glTexCoord2d(x + screen->w / 2, y);
-				glVertex3d(1, 0, 0);
-				glTexCoord2d(x + screen->w / 2, y + screen->h / 2);
-				glVertex3d(1, 1, 0);
-				glTexCoord2d(x, y + screen->h / 2);
-				glVertex3d(0, 1, 0);
+	if(softglow) {
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0, 1, 0, 1, -1, 1);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_FOG);
+		glDisable(GL_CULL_FACE);
+		glColor3d(.05, .05, .05);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE);
+		glEnable(GL_TEXTURE_RECTANGLE_ARB);
+		glBegin(GL_QUADS);
+		for(y = -4; y <= 4; y += 2) {
+			for(x = -4; x <= 4; x += 2) {
+				if(x || y) {
+					glTexCoord2d(x, y);
+					glVertex3d(0, 0, 0);
+					glTexCoord2d(x + screen->w / 2, y);
+					glVertex3d(1, 0, 0);
+					glTexCoord2d(x + screen->w / 2, y + screen->h / 2);
+					glVertex3d(1, 1, 0);
+					glTexCoord2d(x, y + screen->h / 2);
+					glVertex3d(0, 1, 0);
+				}
 			}
 		}
+		glEnd();
+		glDisable(GL_TEXTURE_RECTANGLE_ARB);
 	}
-	glEnd();
-	glDisable(GL_TEXTURE_RECTANGLE_ARB);
 
 	draw_text();
 }
@@ -502,6 +508,11 @@ void handle_key(SDLKey key, int down) {
 					ball[i].dx = -ball[i].x / (INRADIUS - BALLRADIUS);
 					ball[i].dy = -ball[i].y / (INRADIUS - BALLRADIUS);
 				}
+			}
+			break;
+		case SDLK_g:
+			if(down) {
+				softglow ^= 1;
 			}
 			break;
 		default:
