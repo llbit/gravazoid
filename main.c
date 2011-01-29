@@ -14,6 +14,8 @@
 #define BALLRADIUS 6
 #define RIDGEHEIGHT 20
 
+#define MEMBRANESTEP 4
+
 #define MAXBRICK 16
 #define MAXBALL 16
 
@@ -151,13 +153,13 @@ void ridge(int angstart, int angend) {
 	glBegin(GL_QUAD_STRIP);
 	for(i = angstart; i <= angend; i++) {
 		glVertex3d(
-			INRADIUS * cos(i * M_PI * 2 / 256),
-			RIDGEHEIGHT,
-			INRADIUS * sin(i * M_PI * 2 / 256));
-		glVertex3d(
 			OUTRADIUS * cos(i * M_PI * 2 / 256),
 			RIDGEHEIGHT,
 			OUTRADIUS * sin(i * M_PI * 2 / 256));
+		glVertex3d(
+			INRADIUS * cos(i * M_PI * 2 / 256),
+			RIDGEHEIGHT,
+			INRADIUS * sin(i * M_PI * 2 / 256));
 	}
 	glEnd();
 	glBegin(GL_QUAD_STRIP);
@@ -165,11 +167,11 @@ void ridge(int angstart, int angend) {
 		glNormal3d(cos(i * M_PI * 2 / 256), 0, sin(i * M_PI * 2 / 256));
 		glVertex3d(
 			OUTRADIUS * cos(i * M_PI * 2 / 256),
-			RIDGEHEIGHT,
+			0,
 			OUTRADIUS * sin(i * M_PI * 2 / 256));
 		glVertex3d(
 			OUTRADIUS * cos(i * M_PI * 2 / 256),
-			0,
+			RIDGEHEIGHT,
 			OUTRADIUS * sin(i * M_PI * 2 / 256));
 	}
 	glEnd();
@@ -202,6 +204,77 @@ void draw_ball(struct ball *b) {
 	glTranslated(b->x, ypos, b->y);
 	gluSphere(ballquad, BALLRADIUS, 8, 8);
 	glPopMatrix();
+}
+
+void drawmembrane() {
+	int x, y;
+
+	glBindTexture(GL_TEXTURE_2D, TEX_GRID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	glColor3d(.1, .1, .2);
+	glDisable(GL_CULL_FACE);
+	glBegin(GL_QUADS);
+
+	glTexCoord2d(-BORDER * GRIDSCALE, -BORDER * GRIDSCALE);
+	glVertex3d(-BORDER - WORLDW / 2, 0, -BORDER - WORLDH / 2);
+	glTexCoord2d(0, -BORDER * GRIDSCALE);
+	glVertex3d(-WORLDW / 2, 0, -BORDER - WORLDH / 2);
+	glTexCoord2d(0, +(BORDER + WORLDH) * GRIDSCALE);
+	glVertex3d(-WORLDW / 2, 0, +BORDER + WORLDH / 2);
+	glTexCoord2d(-BORDER * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
+	glVertex3d(-BORDER - WORLDW / 2, 0, +BORDER + WORLDH / 2);
+
+	glTexCoord2d(WORLDW * GRIDSCALE, -BORDER * GRIDSCALE);
+	glVertex3d(+BORDER + WORLDW / 2, 0, -BORDER - WORLDH / 2);
+	glTexCoord2d(+(WORLDW + BORDER) * GRIDSCALE, -BORDER * GRIDSCALE);
+	glVertex3d(+(WORLDW - 1) / 2, 0, -BORDER - WORLDH / 2);
+	glTexCoord2d(+(WORLDW + BORDER) * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
+	glVertex3d(+(WORLDW - 1) / 2, 0, +BORDER + WORLDH / 2);
+	glTexCoord2d(WORLDW * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
+	glVertex3d(+BORDER + WORLDW / 2, 0, +BORDER + WORLDH / 2);
+
+	glTexCoord2d(0, -BORDER * GRIDSCALE);
+	glVertex3d(-WORLDW / 2, 0, -BORDER - WORLDH / 2);
+	glTexCoord2d(+WORLDW * GRIDSCALE, -BORDER * GRIDSCALE);
+	glVertex3d(+(WORLDW - 1) / 2, 0, -BORDER - WORLDH / 2);
+	glTexCoord2d(+WORLDW * GRIDSCALE, 0);
+	glVertex3d(+(WORLDW - 1) / 2, 0, -WORLDH / 2);
+	glTexCoord2d(0, 0);
+	glVertex3d(-WORLDW / 2, 0, -WORLDH / 2);
+
+	glTexCoord2d(0, +(WORLDH + BORDER) * GRIDSCALE);
+	glVertex3d(-WORLDW / 2, 0, +BORDER + WORLDH / 2);
+	glTexCoord2d(+WORLDW * GRIDSCALE, +(WORLDH + BORDER) * GRIDSCALE);
+	glVertex3d(+(WORLDW - 1) / 2, 0, +BORDER + WORLDH / 2);
+	glTexCoord2d(+WORLDW * GRIDSCALE, +WORLDH * GRIDSCALE);
+	glVertex3d(+(WORLDW - 1) / 2, 0, +(WORLDH - 1) / 2);
+	glTexCoord2d(0, +WORLDH * GRIDSCALE);
+	glVertex3d(-WORLDW / 2, 0, +(WORLDH - 1) / 2);
+
+	glEnd();
+
+	glEnable(GL_CULL_FACE);
+	glColor3d(.2, .2, .4);
+	for(y = 0; y < WORLDH; y += MEMBRANESTEP) {
+		glBegin(GL_QUAD_STRIP);
+		for(x = 0; x < WORLDW; x += MEMBRANESTEP) {
+			glTexCoord2d(x * GRIDSCALE, y * GRIDSCALE);
+			glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y][x].sinkage, y - WORLDH / 2);
+			glTexCoord2d(x * GRIDSCALE, (y + MEMBRANESTEP) * GRIDSCALE);
+			if(y + MEMBRANESTEP >= WORLDH) {
+				glVertex3d(x - WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
+			} else {
+				glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y + MEMBRANESTEP][x].sinkage, y + MEMBRANESTEP - WORLDH / 2);
+			}
+		}
+		glTexCoord2d(WORLDW * GRIDSCALE, y * GRIDSCALE);
+		glVertex3d(WORLDW / 2, 0, y - WORLDH / 2);
+		glTexCoord2d(WORLDW * GRIDSCALE, (y + MEMBRANESTEP) * GRIDSCALE);
+		glVertex3d(WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
+		glEnd();
+	}
 }
 
 void drawframe() {
@@ -253,9 +326,10 @@ void drawframe() {
 			}
 		}
 		worldmap_valid = 1;
+
+		glViewport(0, 0, screen->w, screen->h);
 	}
 
-	glViewport(0, 0, screen->w, screen->h);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_PROJECTION);
@@ -276,66 +350,12 @@ void drawframe() {
 	glFogf(GL_FOG_MODE, GL_LINEAR);
 	glFogf(GL_FOG_START, 200);
 	glFogf(GL_FOG_END, 600);
-	glBindTexture(GL_TEXTURE_2D, TEX_GRID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	glColor3d(.1, .1, .2);
-	glBegin(GL_QUADS);
-
-	glTexCoord2d(-BORDER * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(-BORDER - WORLDW / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(0, -BORDER * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(0, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, +BORDER + WORLDH / 2);
-	glTexCoord2d(-BORDER * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(-BORDER - WORLDW / 2, 0, +BORDER + WORLDH / 2);
-
-	glTexCoord2d(WORLDW * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(+BORDER + WORLDW / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(+(WORLDW + BORDER) * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(+(WORLDW + BORDER) * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, +BORDER + WORLDH / 2);
-	glTexCoord2d(WORLDW * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(+BORDER + WORLDW / 2, 0, +BORDER + WORLDH / 2);
-
-	glTexCoord2d(0, -BORDER * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(+WORLDW * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(+WORLDW * GRIDSCALE, 0);
-	glVertex3d(+(WORLDW - 1) / 2, 0, -WORLDH / 2);
-	glTexCoord2d(0, 0);
-	glVertex3d(-WORLDW / 2, 0, -WORLDH / 2);
-
-	glTexCoord2d(0, +(WORLDH + BORDER) * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, +BORDER + WORLDH / 2);
-	glTexCoord2d(+WORLDW * GRIDSCALE, +(WORLDH + BORDER) * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, +BORDER + WORLDH / 2);
-	glTexCoord2d(+WORLDW * GRIDSCALE, +WORLDH * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, +(WORLDH - 1) / 2);
-	glTexCoord2d(0, +WORLDH * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, +(WORLDH - 1) / 2);
-
-	glEnd();
-
-	glColor3d(.2, .2, .4);
-	for(y = 0; y < WORLDH - 1; y++) {
-		glBegin(GL_QUAD_STRIP);
-		for(x = 0; x < WORLDW; x++) {
-			glTexCoord2d(x * GRIDSCALE, y * GRIDSCALE);
-			glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y][x].sinkage, y - WORLDH / 2);
-			glTexCoord2d(x * GRIDSCALE, (y + 1) * GRIDSCALE);
-			glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y + 1][x].sinkage, y + 1 - WORLDH / 2);
-		}
-		glEnd();
-	}
+	drawmembrane();
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
+	//glEnable(GL_LIGHT1);
 	light[0] = 150 * sin(eye_angle * M_PI * 2 / 256);
 	light[1] = 180;
 	light[2] = 150 * cos(eye_angle * M_PI * 2 / 256);
@@ -366,15 +386,15 @@ void drawframe() {
 		coords[0][0] = b->x - 8 - WORLDW / 2;
 		coords[0][1] = worldmap[b->y - 8][b->x - 8].sinkage;
 		coords[0][2] = b->y - 8 - WORLDH / 2;
-		coords[1][0] = b->x + 8 - WORLDW / 2;
-		coords[1][1] = worldmap[b->y - 8][b->x + 8].sinkage;
-		coords[1][2] = b->y - 8 - WORLDH / 2;
+		coords[1][0] = b->x - 8 - WORLDW / 2;
+		coords[1][1] = worldmap[b->y + 8][b->x - 8].sinkage;
+		coords[1][2] = b->y + 8 - WORLDH / 2;
 		coords[2][0] = b->x + 8 - WORLDW / 2;
 		coords[2][1] = worldmap[b->y + 8][b->x + 8].sinkage;
 		coords[2][2] = b->y + 8 - WORLDH / 2;
-		coords[3][0] = b->x - 8 - WORLDW / 2;
-		coords[3][1] = worldmap[b->y + 8][b->x - 8].sinkage;
-		coords[3][2] = b->y + 8 - WORLDH / 2;
+		coords[3][0] = b->x + 8 - WORLDW / 2;
+		coords[3][1] = worldmap[b->y - 8][b->x + 8].sinkage;
+		coords[3][2] = b->y - 8 - WORLDH / 2;
 
 		glBegin(GL_QUADS);
 		glNormal3d(0, 1, 0);
@@ -536,11 +556,25 @@ void handle_key(SDLKey key, int down) {
 	}
 }
 
+void mirror(double *x1, double *y1, double x2, double y2) {
+	double len2 = hypot(x2, y2);
+	double dot;
+	
+	x2 /= len2;
+	y2 /= len2;
+
+	dot = sqrt((*x1 * x2) + (*y1 * y2));	// |v1| * cos(alpha)
+	x2 = x2 * dot;				// v1 projected on v2
+	y2 = y2 * dot;
+	*x1 -= x2 * 2;
+	*y1 -= y2 * 2;
+}
+
 void physics() {
 	int i, j;
 	double r;
 
-	eye_angle += key_dx * 2;
+	eye_angle += key_dx;
 
 	for(i = 0; i < nball; i++) {
 		if(ball[i].flags & BF_HELD) {
@@ -568,8 +602,7 @@ void physics() {
 			ball[i].y += ball[i].dy;
 			r = hypot(ball[i].x, ball[i].y);
 			if(r > INRADIUS) {
-				ball[i].dx = -ball[i].dx;
-				ball[i].dy = -ball[i].dy;
+				mirror(&ball[i].dx, &ball[i].dy, ball[i].x, ball[i].y);
 			}
 		}
 	}
@@ -595,9 +628,9 @@ int main() {
 		SDL_Event event;
 		Uint32 now = SDL_GetTicks();
 
-		while(now > millis + 20) {
+		while(now > millis + 10) {
 			physics();
-			millis += 20;
+			millis += 10;
 		}
 
 		drawframe();
