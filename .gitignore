@@ -1,3 +1,4 @@
 game
 .*.swp
 *.o
+Session.vim
