@@ -110,14 +110,17 @@ void handle_event(SDL_Event* event)
 void on_left_click(int x, int y)
 {
 	shape_add_vec(shape, x, y);
-	if (pred >= 0)
+	printf("v: %f, %f\n", x / (float)WINDOW_W,
+			y / (float)WINDOW_H);
+
+	if (pred >= 0) {
 		shape_add_seg(shape, pred, curr);
+		printf("s: %d, %d\n", pred, curr);
+	}
 	if (first == -1)
 		first = curr;
 	pred = curr;
 	curr += 1;
-	printf("%f, %f\n", x / (float)WINDOW_W,
-			y / (float)WINDOW_H);
 }
 
 void on_right_click(int x, int y)
