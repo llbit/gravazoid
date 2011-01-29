@@ -1,5 +1,6 @@
 #define _XOPEN_SOURCE 500
 #include <stdio.h>
+#include <stdbool.h>
 #include <err.h>
 #include <math.h>
 #include <SDL/SDL.h>
@@ -104,7 +105,7 @@ void add_brick(int x, int y, int color) {
 	nbrick++;
 }
 
-void videosetup(int fullscreen) {
+void videosetup(bool fullscreen) {
 	Uint32 flags = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_OPENGL;
 	SDL_Rect **list;
 	int w, h;
@@ -780,17 +781,23 @@ void load_resources()
 	bonus = new_bigint(1);
 }
 
-int main() {
+int main(int argc, const char** argv) {
 	int	time = 0;
 	int	frames = 0;
+	bool	fullscreen = true;
 	Uint32	millis;
+
+	for (int i = 1; i < argc; ++i) {
+		if (!strcmp(argv[i], "-window"))
+			fullscreen = false;
+	}
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
 
 	load_resources();
 
-	videosetup(0);
+	videosetup(fullscreen);
 	glsetup();
 
 	SDL_ShowCursor(SDL_DISABLE);
