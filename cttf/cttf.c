@@ -191,6 +191,16 @@ void ttf_free_gd_list(ttf_gd_list_t** obj)
 	*obj = NULL;
 }
 
+static void ttf_read_gh(FILE* file, ttf_glyph_header_t* gh)
+{
+	fread(gh, sizeof(*gh), 1, file);
+	gh->number_of_contours = SWAP_ENDIAN_WORD(gh->number_of_contours);
+	gh->xmin = SWAP_ENDIAN_WORD(gh->xmin);
+	gh->ymin = SWAP_ENDIAN_WORD(gh->ymin);
+	gh->xmax = SWAP_ENDIAN_WORD(gh->xmax);
+	gh->ymax = SWAP_ENDIAN_WORD(gh->ymax);
+}
+
 /*
  * Returns NULL on failure.
  *
@@ -292,10 +302,10 @@ ttf_t* ttf_load(FILE* file)
 	ttf_seek_header(file, &hmtx);
 	ttfobj->plhmtx = malloc(sizeof(ttf_lhmetrics_t) * hh.num_h_metrics);
 	ttfobj->nhmtx = hh.num_h_metrics;
-	fread(ttfobj->plhmtx, hh.num_h_metrics << 2, 1, file);
+	fread(ttfobj->plhmtx, sizeof(ttf_lhmetrics_t), hh.num_h_metrics, file);
 	int i = ttfobj->nglyphs - hh.num_h_metrics;
-	ttfobj->plsb = malloc(sizeof(short) * i);
-	if (i) fread(ttfobj->plsb, i << 1, 1, file);
+	ttfobj->plsb = malloc(sizeof(int16_t) * i);
+	if (i) fread(ttfobj->plsb, sizeof(int16_t), i, file);
 
 	// load cmap - character mappings
 	ttf_seek_header(file, &cmap);
@@ -342,20 +352,20 @@ found_platform:
 	fread(&mf4h.entry_selector, sizeof(mf4h.entry_selector), 1, file);
 	fread(&mf4h.range_shift, sizeof(mf4h.range_shift), 1, file);
 	mf4h.end_count = malloc(sizeof(uint16_t) * mf4h.seg_count_2);
-	fread(mf4h.end_count, mf4h.seg_count_2 << 1, 1, file);
+	fread(mf4h.end_count, sizeof(uint16_t), mf4h.seg_count_2, file);
 	fread(&mf4h.reserved_pad, sizeof(mf4h.reserved_pad), 1, file);
 	if (mf4h.reserved_pad) {
 	    fprintf(stderr, "Invalid font file: reserved pad not NULL!\n");
 	    return NULL;
 	}
 	mf4h.start_count = malloc(sizeof(uint16_t) * mf4h.seg_count_2);
-	fread(mf4h.start_count, mf4h.seg_count_2 << 1, 1, file);
+	fread(mf4h.start_count, sizeof(uint16_t), mf4h.seg_count_2, file);
 	mf4h.id_delta = malloc(sizeof(int16_t) * mf4h.seg_count_2);
-	fread(mf4h.id_delta, mf4h.seg_count_2 << 1, 1, file);
+	fread(mf4h.id_delta, sizeof(int16_t), mf4h.seg_count_2, file);
 	long length = (SWAP_ENDIAN_WORD(mf4h.length) -
 		16 + (mf4h.seg_count_2 << 3)) >> 1;
 	mf4h.id_range_offset = malloc(sizeof(uint16_t) * length);
-	fread(mf4h.id_range_offset, length << 1, 1, file);
+	fread(mf4h.id_range_offset, sizeof(uint16_t), length, file);
 
 	// allocate space for the table
 	ttfobj->glyph_table = malloc(sizeof(uint32_t) * TTF_GLYPH_TBL_SIZE);
@@ -406,7 +416,7 @@ found_platform:
 	if (!fh.index_to_loc_format) {
 		// short offsets
 		uint16_t* indextolocation2 = malloc(sizeof(uint16_t) * (ttfobj->nglyphs + 1));
-		fread(indextolocation2, (ttfobj->nglyphs+1) << 1, 1, file);
+		fread(indextolocation2, sizeof(uint16_t), (ttfobj->nglyphs+1), file);
 		for (i = 0; i <= ttfobj->nglyphs; i++)
 			indextolocation[i] = (uint32_t)
 				(((0xFF00 & indextolocation2[i]) >> 8) |
@@ -414,7 +424,7 @@ found_platform:
 		free(indextolocation2);
 	} else {
 		// long offsets
-		fread(indextolocation, (ttfobj->nglyphs+1) << 2, 1, file);
+		fread(indextolocation, sizeof(uint32_t), (ttfobj->nglyphs+1), file);
 		for (i = 0; i <= ttfobj->nglyphs; i++)
 			indextolocation[i] = SWAP_ENDIAN_DWORD(indextolocation[i]);
 	}
@@ -435,7 +445,7 @@ found_platform:
 			continue;
 		}
 		fseek(file, glyf.offset + indextolocation[i], SEEK_SET);
-		fread(&gh, sizeof(gh), 1, file);
+		ttf_read_gh(file, &gh);
 		ttf_read_glyph(ttfobj, file, &gh,
 				&ttfobj->glyph_data[i],
 				&glyf, indextolocation, i);
@@ -464,7 +474,6 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 		uint32_t*		indextolocation,
 		uint32_t		i)
 {
-	gh->number_of_contours = SWAP_ENDIAN_WORD(gh->number_of_contours);
 	if (gh->number_of_contours < 0) {
 		// load composite glyph
 		uint16_t		contour;
@@ -487,13 +496,16 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 			//Load subglyph{
 				readpos = ftell(file);
 				fseek(file, glyf->offset + indextolocation[glyph_index], SEEK_SET);
-				fread(&gh, sizeof(gh), 1, file);
+				ttf_read_gh(file, gh);
 				component = malloc(sizeof(*component));
 				ttf_read_glyph(ttfobj, file, gh, component,
 						glyf, indextolocation, glyph_index);
 				ttf_gd_list_add(&components, component);
 				fseek(file, readpos, SEEK_SET);
 			//}
+			
+			// flag out of range check
+			assert(flags < 0x800);
 
 			if (flags & TTF_WORD_ARGUMENTS) {
 				fread(&xoff, sizeof(xoff), 1, file);
@@ -653,7 +665,7 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 	ttf_simpglyphinfo_t simple;
 	simple.endpoints_contour =
 		malloc(sizeof(uint16_t) * gh->number_of_contours);
-	fread(simple.endpoints_contour, gh->number_of_contours<<1, 1, file);
+	fread(simple.endpoints_contour, sizeof(uint16_t), gh->number_of_contours, file);
 	//calculate the number of points in the glyph
 	int j, numpoints = 0;
 	for (j = 0; j < gh->number_of_contours; j++) {
@@ -662,22 +674,23 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 			numpoints = simple.endpoints_contour[j];
 	}
 	numpoints++;
-	fread(&simple.instruction_length, 2, 1, file);
+	fread(&simple.instruction_length, sizeof(simple.instruction_length), 1, file);
 	if (numpoints <= 0)
 	{
 		return;
 	}
+
+	// read all the flags
 	simple.instruction_length = SWAP_ENDIAN_WORD(simple.instruction_length);
 	simple.instructions = malloc(sizeof(uint8_t) * simple.instruction_length);
-	fread(simple.instructions, simple.instruction_length, 1, file);
-	//read all the flags
+	fread(simple.instructions, sizeof(uint8_t), simple.instruction_length, file);
 	simple.flags = malloc(sizeof(uint8_t)*numpoints);
-	uint8_t* flagbuff = malloc(sizeof(uint8_t)*numpoints);
-	uint16_t flagind = 0;
-	uint32_t flagpos = ftell(file);
-	fread(flagbuff, numpoints, 1, file);
-	uint8_t tmpb;
-	uint8_t tmpb2;
+	uint8_t*	flagbuff = malloc(sizeof(uint8_t)*numpoints);
+	uint16_t	flagind = 0;
+	uint32_t	flagpos = ftell(file);
+	uint8_t		tmpb;
+	uint8_t		tmpb2;
+	fread(flagbuff, sizeof(uint8_t), numpoints, file);
 	j = 0;
 	while (j < numpoints) {
 		tmpb = flagbuff[flagind++];
@@ -698,7 +711,7 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 		reading point by point.
 	*/
 	uint8_t* pointbuff = malloc(sizeof(uint8_t) * (numpoints << 2));
-	fread(pointbuff, numpoints << 2, 1, file);
+	fread(pointbuff, sizeof(uint8_t), numpoints << 2, file);
 	uint32_t pointind = 0;
 	bool is_short = false;
 	bool is_prev = false;
@@ -783,7 +796,13 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 	free(simple.flags);
 }
 
-void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape)
+float ttf_get_chr_width(ttf_t* ttfobj, uint16_t chr)
+{
+	assert(ttfobj != NULL);
+	return (float)(ttfobj->glyph_data[ttfobj->glyph_table[chr]].aw) / ttfobj->upem;
+}
+
+void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape, float scale)
 {
 	if (ttfobj->interpolation_level) {
 		// interpolate the curves
@@ -791,7 +810,7 @@ void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape)
 		uint16_t*	endpoints;
 
 		ttf_interpolate(ttfobj, chr, &points, &endpoints,
-				1.f/(float)ttfobj->upem);
+				scale/(float)ttfobj->upem);
 
 		uint16_t	lim = 0;
 		uint16_t	e;
@@ -982,8 +1001,8 @@ void ttf_set_ls_aw(ttf_t* ttfobj,
 	int16_t	xmin;
 	int16_t	xmax;
 
-	xmin = SWAP_ENDIAN_WORD(gh->xmin);
-	xmax = SWAP_ENDIAN_WORD(gh->xmax);
+	xmin = gh->xmin;
+	xmax = gh->xmax;
 
 	gd->maxwidth = xmax - xmin;
 	if (ttfobj->nhmtx > i) {

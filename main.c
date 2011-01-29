@@ -7,6 +7,7 @@
 
 #include "ark.h"
 #include "render.h"
+#include "text.h"
 
 #define INRADIUS 230
 #define OUTRADIUS 240
@@ -27,15 +28,20 @@
 static void draw_text();
 
 static int running = 1;
-static SDL_Surface *screen;
+SDL_Surface *screen;
 
 static double eye_angle = 0;
 static int key_dx = 0;
 static int paddle_vel = 0;
 
+static vfont_t* font = NULL;
+
 SDL_sem *semaphore;
 
 GLUquadric *ballquad;
+
+static int bonus = 1;
+static int score = 0;
 
 int worldmap_valid;
 
@@ -503,18 +509,15 @@ void drawframe() {
 	for(i = 0; i < nball; i++) {
 		draw_ball(&ball[i]);
 	}
+
+	draw_text();
 }
 
 void draw_text()
 {
-	shape_t*	shape = new_shape();
-	shape_add_vec(shape, 100.f, 100.f);
-	shape_add_vec(shape, 200.f, 100.f);
-	shape_add_vec(shape, 200.f, 100.f);
-	shape_add_vec(shape, 200.f, 0.f);
-	shape_add_seg(shape, 0, 1);
-	shape_add_seg(shape, 2, 3);
-	render_shape(shape);
+	char	score_str[32];
+	snprintf(score_str, 32, "Score: %d", score);
+	draw_utf_str(font, score_str, 2.f, 4.f);
 }
 
 void handle_key(SDLKey key, int down) {
@@ -571,6 +574,8 @@ void mirror(double *x1, double *y1, double x2, double y2) {
 void removebrick(struct brick *b) {
 	b->flags &= ~BRICKF_LIVE;
 	worldmap_valid = 0;
+	score += bonus;
+	bonus *= 2;
 }
 
 int collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
@@ -615,6 +620,11 @@ void rotate(double *xp, double *yp, double a) {
 	*yp = x * sin(a) + y * cos(a);
 }
 
+void bonus_reset()
+{
+	bonus = 1;
+}
+
 void physics() {
 	int i, j;
 	double r, size;
@@ -657,6 +667,7 @@ void physics() {
 			ball[i].y += ball[i].dy * BALLSPEED;
 			r = hypot(ball[i].x, ball[i].y);
 			if(r > INRADIUS) {
+				bonus_reset();
 				if(ball[i].flags & BALLF_OUTSIDE) {
 					if(r > 2 * INRADIUS) {
 						ball[i].flags = BALLF_HELD;
@@ -696,6 +707,7 @@ int main() {
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
 
+	font = load_font("testfont.ttf", 100.f, 3);
 	videosetup(0);
 	glsetup();
 
