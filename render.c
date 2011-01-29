@@ -1,12 +1,10 @@
-#include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
 #include "ark.h"
 #include "render.h"
 
-extern SDL_Surface *screen;
-
 void render_shape(shape_t* shape, float x, float y)
 {
+	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
 	glViewport(0, 0, WORLDW, WORLDH);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -19,7 +17,7 @@ void render_shape(shape_t* shape, float x, float y)
 	glDisable(GL_FOG);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
-	glColor3d(.2, .2, .2);
+	glColor3f(1.f, 1.f, 1.f);
 
 	glBegin(GL_LINES);
 
@@ -34,5 +32,5 @@ void render_shape(shape_t* shape, float x, float y)
 	}
 
 	glEnd();
-	glViewport(0, 0, screen->w, screen->h);
+	glPopAttrib();
 }

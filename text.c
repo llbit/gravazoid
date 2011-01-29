@@ -52,7 +52,7 @@ void font_load_chr(vfont_t* font, uint16_t chr)
 	}
 }
 
-void draw_utf_str(vfont_t* font, const char* str)
+void draw_utf_str(vfont_t* font, const char* str, float x, float y)
 {
 	if (font == NULL) return;
 
@@ -62,7 +62,7 @@ void draw_utf_str(vfont_t* font, const char* str)
 		uint16_t chr = (uint16_t)*p;
 		if (font->chr[chr] == NULL)
 			font_load_chr(font, chr);
-		render_shape(font->chr[chr], xoff, 0.f);
+		render_shape(font->chr[chr], x+xoff, y);
 		xoff += font->scale * ttf_get_chr_width(font->ttf, chr);
 		p += 1;
 	}

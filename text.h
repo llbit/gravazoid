@@ -16,7 +16,7 @@ struct vfont {
 vfont_t* load_font(const char* name, float scale, int ipl);
 void free_font(vfont_t** font);
 void font_load_chr(vfont_t* font, uint16_t chr);
-void draw_utf_str(vfont_t* font, const char* str);
+void draw_utf_str(vfont_t* font, const char* str, float x, float y);
 
 #endif
 

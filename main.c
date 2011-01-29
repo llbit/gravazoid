@@ -509,7 +509,7 @@ void drawframe() {
 
 void draw_text()
 {
-	draw_utf_str(font, "Score:");
+	draw_utf_str(font, "Score:", 2.f, 4.f);
 }
 
 void handle_key(SDLKey key, int down) {
