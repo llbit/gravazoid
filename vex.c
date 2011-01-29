@@ -15,15 +15,21 @@
 static shape_t*	shape;
 static int	curr = 0;
 static int	pred = -1;
+static int	first = -1;
+static int	cx = -1;
+static int	cy = -1;
 
 SDL_Surface*	screen;
 static bool	running = true;
 
-#define WINDOW_W (300)
-#define WINDOW_H (300)
+#define WINDOW_W (500)
+#define WINDOW_H (500)
 
+static void render();
 static void handle_event(SDL_Event* event);
 static void handle_key(SDLKey key, int down);
+static void on_left_click(int x, int y);
+static void on_right_click(int x, int y);
 
 void videosetup()
 {
@@ -48,8 +54,7 @@ int main(int argc, const char** argv)
 	while (running) {
 		SDL_Event event;
 
-		glClear(GL_COLOR_BUFFER_BIT);
-		render_shape(shape, 0.f, 0.f);
+		render();
 
 		SDL_GL_SwapBuffers();
 		while (SDL_PollEvent(&event)) {
@@ -60,22 +65,38 @@ int main(int argc, const char** argv)
 	return 0;
 }
 
+void render()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	render_shape(shape, 0.f, 0.f);
+	if (first != -1) {
+		glPushAttrib(GL_COLOR_BUFFER_BIT);
+		glColor3f(0.84f, 0.84f, 0.84f);
+		glBegin(GL_LINES);
+		glVertex3f(shape->vec[shape->nvec-1].x,
+				shape->vec[shape->nvec-1].y,
+				0.f);
+		glVertex3f((float)cx, (float)cy, 0.f);
+		glEnd();
+		glPopAttrib();
+	}
+}
+
 void handle_event(SDL_Event* event)
 {
 	switch(event->type) {
 		case SDL_MOUSEBUTTONDOWN:
-			{
-				int x = event->button.x;
-				int y = WINDOW_H - event->button.y;
-				shape_add_vec(shape, x, y);
-				if (pred >= 0)
-					shape_add_seg(shape, pred, curr);
-				pred = curr;
-				curr += 1;
-				printf("%f, %f\n", x / (float)WINDOW_W,
-						y / (float)WINDOW_H);
-					break;
-			}
+			if (event->button.button == SDL_BUTTON_LEFT)
+				on_left_click(event->button.x,
+						WINDOW_H - event->button.y);
+			else if (event->button.button == SDL_BUTTON_RIGHT)
+				on_right_click(event->button.x,
+						WINDOW_H - event->button.y);
+			break;
+		case SDL_MOUSEMOTION:
+			cx = event->motion.x;
+			cy = WINDOW_H - event->motion.y;
+			break;
 		case SDL_KEYDOWN:
 			handle_key(event->key.keysym.sym, 1);
 			break;
@@ -83,6 +104,28 @@ void handle_event(SDL_Event* event)
 			handle_key(event->key.keysym.sym, 0);
 			break;
 		default:;
+	}
+}
+
+void on_left_click(int x, int y)
+{
+	shape_add_vec(shape, x, y);
+	if (pred >= 0)
+		shape_add_seg(shape, pred, curr);
+	if (first == -1)
+		first = curr;
+	pred = curr;
+	curr += 1;
+	printf("%f, %f\n", x / (float)WINDOW_W,
+			y / (float)WINDOW_H);
+}
+
+void on_right_click(int x, int y)
+{
+	if (first != -1) {
+		shape_add_seg(shape, pred, first);
+		first = -1;
+		pred = -1;
 	}
 }
 
