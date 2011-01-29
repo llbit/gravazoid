@@ -74,11 +74,15 @@ void ttf_interpolate(
 		uint16_t**		endpoints,
 		float			scale);
 
+// get width of a glyph
+float ttf_get_chr_width(ttf_t* ttfobj, uint16_t chr);
+
 // export a TTF character to a vector list
 void ttf_export_chr_shape(
 		ttf_t*			ttfobj,
 		uint16_t		chr,
-		shape_t*		shape);
+		shape_t*		shape,
+		float			scale);
 
 struct ttf_gd_list {
 	ttf_gd_list_t*		succ;

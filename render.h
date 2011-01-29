@@ -7,7 +7,7 @@
 
 #include "cttf/shape.h"
 
-void render_shape(shape_t* shape);
+void render_shape(shape_t* shape, float x, float y);
 
 #endif
 

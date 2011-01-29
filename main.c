@@ -7,7 +7,7 @@
 
 #include "ark.h"
 #include "render.h"
-#include "cttf/cttf.h"
+#include "text.h"
 
 #define INRADIUS 220
 #define OUTRADIUS 230
@@ -23,13 +23,12 @@
 static void draw_text();
 
 static int running = 1;
-static SDL_Surface *screen;
+SDL_Surface *screen;
 
 static uint8_t eye_angle = 0;
 static int key_dx = 0;
 
-static ttf_t* ttf = NULL;
-static shape_t* tshape = NULL;
+static vfont_t* font = NULL;
 
 SDL_sem *semaphore;
 
@@ -517,7 +516,7 @@ void drawframe() {
 
 void draw_text()
 {
-	if (tshape) render_shape(tshape);
+	draw_utf_str(font, "Score:");
 }
 
 void handle_key(SDLKey key, int down) {
@@ -607,29 +606,13 @@ void physics() {
 	}
 }
 
-void load_font()
-{
-	FILE*	fp;
-	fp = fopen("testfont.ttf", "r");
-	if (!fp) {
-		fprintf(stderr, "Could not find testfont.ttf\n");
-		return;
-	}
-	ttf = ttf_load(fp);
-	if (ttf) {
-		tshape = new_shape();
-		ttf_export_chr_shape(ttf, 'a', tshape);
-	}
-	fclose(fp);
-}
-
 int main() {
 	Uint32 millis;
 
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
 
-	load_font();
+	font = load_font("testfont.ttf", 100.f, 3);
 	videosetup(0);
 	glsetup();
 

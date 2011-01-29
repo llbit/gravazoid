@@ -5,16 +5,20 @@ LDFLAGS=-lSDL -lGLU -lGL -g -pg
 
 all:	game
 
-game:	main.o render.o shape.o cttf.o
+game:	main.o render.o shape.o cttf.o text.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
 clean:
 	rm main.o
 	rm shape.o
 	rm cttf.o
+	rm text.o
 	rm game
 
 render.o: render.c
+	${CC} ${CFLAGS} -c $^ -o $@
+
+text.o: text.c
 	${CC} ${CFLAGS} -c $^ -o $@
 
 cttf.o: cttf/cttf.c

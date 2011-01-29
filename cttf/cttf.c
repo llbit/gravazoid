@@ -796,7 +796,13 @@ void ttf_read_glyph(ttf_t*		ttfobj,
 	free(simple.flags);
 }
 
-void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape)
+float ttf_get_chr_width(ttf_t* ttfobj, uint16_t chr)
+{
+	assert(ttfobj != NULL);
+	return (float)(ttfobj->glyph_data[ttfobj->glyph_table[chr]].aw) / ttfobj->upem;
+}
+
+void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape, float scale)
 {
 	if (ttfobj->interpolation_level) {
 		// interpolate the curves
@@ -804,7 +810,7 @@ void ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr, shape_t* shape)
 		uint16_t*	endpoints;
 
 		ttf_interpolate(ttfobj, chr, &points, &endpoints,
-				100.f/(float)ttfobj->upem);
+				scale/(float)ttfobj->upem);
 
 		uint16_t	lim = 0;
 		uint16_t	e;
