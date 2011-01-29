@@ -1,14 +1,17 @@
+#include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
 #include "ark.h"
 #include "render.h"
 
+extern SDL_Surface *screen;
+
 void render_shape(shape_t* shape, float x, float y)
 {
 	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
-	glViewport(0, 0, WORLDW, WORLDH);
+	glViewport(0, 0, screen->w, screen->h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0, WORLDW, 0, WORLDH, -1, 1);
+	glOrtho(0, screen->w, 0, screen->h, -1, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glTranslatef(x, y, 0.f);

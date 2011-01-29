@@ -37,6 +37,9 @@ SDL_sem *semaphore;
 
 GLUquadric *ballquad;
 
+static int bonus = 1;
+static int score = 0;
+
 int worldmap_valid;
 
 enum {
@@ -509,7 +512,9 @@ void drawframe() {
 
 void draw_text()
 {
-	draw_utf_str(font, "Score:", 2.f, 4.f);
+	char	score_str[32];
+	snprintf(score_str, 32, "Score: %d", score);
+	draw_utf_str(font, score_str, 2.f, 4.f);
 }
 
 void handle_key(SDLKey key, int down) {
@@ -566,6 +571,8 @@ void mirror(double *x1, double *y1, double x2, double y2) {
 void removebrick(struct brick *b) {
 	b->flags &= ~BRICKF_LIVE;
 	worldmap_valid = 0;
+	score += bonus;
+	bonus *= 2;
 }
 
 void collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
@@ -609,6 +616,11 @@ void rotate(double *xp, double *yp, double a) {
 	*yp = x * sin(a) + y * cos(a);
 }
 
+void bonus_reset()
+{
+	bonus = 1;
+}
+
 void physics() {
 	int i, j;
 	double r, size;
@@ -642,6 +654,7 @@ void physics() {
 			ball[i].y += ball[i].dy * BALLSPEED;
 			r = hypot(ball[i].x, ball[i].y);
 			if(r > INRADIUS) {
+				bonus_reset();
 				if(ball[i].flags & BALLF_OUTSIDE) {
 					if(r > 2 * INRADIUS) {
 						ball[i].flags = BALLF_HELD;
