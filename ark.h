@@ -2,9 +2,10 @@
 #define ARK_ARK_H
 
 #define WORLDH 240
-#define WORLDW 320
+#define WORLDW 240
 
-#define BORDER 512
+#define BORDER (512)
+#define VIGNETTE_BRDR (200)
 
 #define GRIDSCALE .12
 #define HEIGHTSCALE 20

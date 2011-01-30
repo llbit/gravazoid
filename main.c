@@ -58,7 +58,8 @@ int worldmap_valid;
 enum {
 	TEX_GRID,
 	TEX_BLOB,
-	TEX_OVERLAY
+	TEX_OVERLAY,
+	TEX_VIGNETTE,
 };
 
 struct worldpixel {
@@ -125,6 +126,7 @@ void videosetup(bool fullscreen) {
 void glsetup() {
 	uint8_t gridtexture[16][16];
 	uint8_t blobtexture[BLOBSIZE][BLOBSIZE];
+	uint8_t vignette[32][32];
 	int x, y;
 
 	for(y = 0; y < 16; y++) {
@@ -149,10 +151,22 @@ void glsetup() {
 			blobtexture[y][x] = 128 + 127 * cos(dist2 * M_PI);
 		}
 	}
+	for (y = 0; y < 32; ++y) {
+		for (x = 0; x < 32; ++x) {
+			int	xc = x-16;
+			int	yc = y-16;
+			double	r = (xc*xc+yc*yc) / (double)(16*16);
+			if (r > 1.0) r = 1.0;
+			r = 1 - r;
+			vignette[y][x] = 255*r;
+		}
+	}
 	glBindTexture(GL_TEXTURE_2D, TEX_GRID);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 16, 16, GL_LUMINANCE, GL_UNSIGNED_BYTE, gridtexture);
 	glBindTexture(GL_TEXTURE_2D, TEX_BLOB);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, BLOBSIZE, BLOBSIZE, GL_LUMINANCE, GL_UNSIGNED_BYTE, blobtexture);
+	glBindTexture(GL_TEXTURE_2D, TEX_VIGNETTE);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE, GL_UNSIGNED_BYTE, vignette);
 
 	ballquad = gluNewQuadric();
 }
@@ -163,9 +177,9 @@ void resetlevel(int restart) {
 	srand(0);
 	nbrick = 0;
 	for(y = 0; y < 12; y++) {
-		for(x = 0; x < 18; x++) {
-			if(x != 8 && x != 9 && y != 5 && y != 6) {
-				add_brick(x * 16 + 24, y * 16 + 32, rand() % 6);
+		for(x = 0; x < 12; x++) {
+			if(x != 5 && x != 6 && y != 5 && y != 6) {
+				add_brick(x * 16 + 32, y * 16 + 32, rand() % 6);
 			}
 		}
 	}
@@ -239,12 +253,59 @@ void draw_ball(double bx, double by, int segments) {
 void drawmembrane() {
 	int x, y;
 
+	glBindTexture(GL_TEXTURE_2D, TEX_VIGNETTE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	glColor3d(1, 1, 1);
+	glDepthMask(GL_FALSE);
+
+	glBegin(GL_QUADS);
+	glTexCoord2d(0, 0);
+	glVertex3d(-VIGNETTE_BRDR - WORLDW / 2, 0, -VIGNETTE_BRDR - WORLDH / 2);
+	glTexCoord2d(0, 1);
+	glVertex3d(-VIGNETTE_BRDR - WORLDW / 2, 0, +VIGNETTE_BRDR + WORLDH / 2);
+	glTexCoord2d(1, 1);
+	glVertex3d(+VIGNETTE_BRDR + WORLDW / 2, 0, +VIGNETTE_BRDR + WORLDH / 2);
+	glTexCoord2d(1, 0);
+	glVertex3d(+VIGNETTE_BRDR + WORLDW / 2, 0, -VIGNETTE_BRDR - WORLDH / 2);
+	glEnd();
+
+#if 0
+	for(y = 0; y < WORLDH-1; y += MEMBRANESTEP) {
+		glBegin(GL_QUAD_STRIP);
+		for(x = 0; x < WORLDW; x += MEMBRANESTEP) {
+			glTexCoord2d((VIGNETTE_BRDR + x) / (double)(2*VIGNETTE_BRDR+WORLDW),
+					(VIGNETTE_BRDR + y) / (double)(2*VIGNETTE_BRDR+WORLDH));
+			glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y][x].sinkage, y - WORLDH / 2);
+			glTexCoord2d((VIGNETTE_BRDR + x) / (double)(2*VIGNETTE_BRDR+WORLDW),
+					(VIGNETTE_BRDR + y + MEMBRANESTEP) / (double)(2*VIGNETTE_BRDR+WORLDH));
+			if(y + MEMBRANESTEP >= WORLDH) {
+				glVertex3d(x - WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
+			} else {
+				glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y + MEMBRANESTEP][x].sinkage, y + MEMBRANESTEP - WORLDH / 2);
+			}
+		}
+		glTexCoord2d((VIGNETTE_BRDR + x) / (double)(2*VIGNETTE_BRDR+WORLDW),
+				(VIGNETTE_BRDR + y) / (double)(2*VIGNETTE_BRDR+WORLDH));
+		glVertex3d(WORLDW / 2, 0, y - WORLDH / 2);
+		glTexCoord2d((VIGNETTE_BRDR + x) / (double)(2*VIGNETTE_BRDR+WORLDW),
+				(VIGNETTE_BRDR + y + MEMBRANESTEP) / (double)(2*VIGNETTE_BRDR+WORLDH));
+		glVertex3d(WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
+		glEnd();
+	}
+#endif
+
 	glBindTexture(GL_TEXTURE_2D, TEX_GRID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	glColor3d(.15, .10, .2);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_DST_COLOR, GL_ZERO);
+	glDepthMask(GL_TRUE);
 	glDisable(GL_CULL_FACE);
+	glColor3ub(0x62, 0xBC, 0xE8);
+	
 	glBegin(GL_QUADS);
 
 	glTexCoord2d(-BORDER * GRIDSCALE, -BORDER * GRIDSCALE);
@@ -304,6 +365,9 @@ void drawmembrane() {
 		glVertex3d(WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
 		glEnd();
 	}
+
+	glDisable(GL_BLEND);
+
 }
 
 void drawscene(int with_membrane) {
