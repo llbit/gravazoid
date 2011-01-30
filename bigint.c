@@ -62,6 +62,7 @@ void	bigint_set(bigint_t* a, unsigned v)
 	int i;
 	for (i = 0; i < a->n+1; ++i)
 		a->d[i] = 0;
+	a->n = 0;
 	for (i = 0; v > 0; ++i) {
 		int rem = v % BIGINT_RADIX;
 		a->d[i] = rem;

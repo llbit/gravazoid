@@ -72,7 +72,6 @@ void draw_utf_str(vfont_t* font, const char* str, float x, float y)
 	glDisable(GL_FOG);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
-	glColor3f(1.f, 1.f, 1.f);
 
 	const char* p = str;
 	float xoff = 0.f;

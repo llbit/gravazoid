@@ -12,7 +12,7 @@
 #include "bigint.h"
 #include "cttf/shape.h"
 
-static shape_t* testshape = NULL;
+//static shape_t* testshape = NULL;
 
 static int colors[][3] = {
 	{0x65, 0x9D, 0xFD}, // light blue
@@ -50,6 +50,8 @@ GLUquadric *ballquad;
 
 static bigint_t* bonus;
 static bigint_t* score;
+static bigint_t* diff;
+static int score_up = 0;
 
 int worldmap_valid;
 
@@ -517,14 +519,27 @@ void drawframe() {
 }
 
 void draw_text() {
-	char buf[32];
-	char scorestr[32];
+	char ibuf[64];
+	char buf[64];
 	int i;
 
-	bigint_to_str(score, scorestr, sizeof(scorestr));
-	snprintf(buf, sizeof(buf), "Score: %s", scorestr);
+	// score:
+	bigint_to_str(score, ibuf, sizeof ibuf);
+	snprintf(buf, sizeof buf, "Score: %s", ibuf);
+	glColor3f(1.f, 1.f, 1.f);
 	draw_utf_str(font, buf, 2.f, 4.f);
+
+	// score_up:
+	if (score_up > 0) {
+		buf[0] = '+';
+		bigint_to_str(diff, buf+1, sizeof buf - 1);
+		float v = logf(score_up) / logf(1000);
+		glColor3f(v, v, v);
+		draw_utf_str(font, buf, 2.f, 4.f + 150.f*v);
+	}
+
 	snprintf(buf, sizeof(buf), "%3d fps", fps);
+	glColor3f(1.f, 1.f, 1.f);
 	draw_utf_str(font, buf, 2.f, screen->h - 100);
 	for(i = 0; i < lives; i++) {
 		draw_utf_str(font, "*", screen->w - 300 + 60 * i, screen->h - 100);
@@ -535,7 +550,6 @@ void draw_text() {
 	}
 
 	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
-	//glViewport(0, 0, screen->w, screen->h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, 1, 0, 1, -1, 1);
@@ -610,7 +624,9 @@ void removebrick(struct brick *b) {
 		resetlevel(0);
 	}
 
+	score_up = 1000;
 	bigint_add(score, bonus, score);
+	bigint_add(diff, bonus, diff);
 	bigint_add(bonus, bonus, bonus);
 }
 
@@ -757,6 +773,7 @@ void load_resources()
 	font = load_font("testfont.ttf", 100.f, 3);
 	score = new_bigint(0);
 	bonus = new_bigint(1);
+	diff = new_bigint(0);
 }
 
 int main(int argc, const char** argv) {
@@ -789,6 +806,11 @@ int main(int argc, const char** argv) {
 		SDL_Event event;
 		Uint32 now = SDL_GetTicks();
 
+		if (score_up > 0) {
+			score_up -= now - millis;
+			if (score_up <= 0)
+				bigint_set(diff, 0);
+		}
 		time += now - millis;
 		if (time >= 1000) {
 			fps = (int) (frames / (time / 1000.f));
