@@ -7,6 +7,9 @@
 #define BORDER (200)
 #define VIGNETTE_BRDR (200)
 
+#define SHARDW (1)
+#define SHARDH (1.3)
+
 #define GRIDSCALE .12
 #define HEIGHTSCALE 20
 #define NORMSCALE .1

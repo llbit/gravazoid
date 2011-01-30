@@ -11,6 +11,7 @@
 #include "text.h"
 #include "bigint.h"
 #include "cttf/shape.h"
+#include "list.h"
 
 //static shape_t* testshape = NULL;
 
@@ -60,7 +61,21 @@ enum {
 	TEX_BLOB,
 	TEX_OVERLAY,
 	TEX_VIGNETTE,
+	TEX_SHARD,
 };
+
+typedef struct shard {
+	bool		visited;
+	float		x;
+	float		y;
+	float		z;
+	float		xvel;
+	float		yvel;
+	float		zvel;
+	int		ttl;
+} shard_t;
+
+static list_t*	shards = NULL;
 
 struct worldpixel {
 	uint8_t		sinkage;
@@ -101,6 +116,14 @@ void add_brick(int x, int y, int color) {
 	nbrick++;
 }
 
+static int get_brick_y(struct brick* b)
+{
+	return (worldmap[b->y - 8][b->x - 8].sinkage +
+			worldmap[b->y + 8][b->x - 8].sinkage +
+			worldmap[b->y + 8][b->x + 8].sinkage +
+			worldmap[b->y - 8][b->x + 8].sinkage) / 4;
+}
+
 void videosetup(bool fullscreen) {
 	Uint32 flags = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_OPENGL;
 	SDL_Rect **list;
@@ -127,6 +150,12 @@ void glsetup() {
 	uint8_t gridtexture[16][16];
 	uint8_t blobtexture[BLOBSIZE][BLOBSIZE];
 	uint8_t vignette[32][32];
+	uint8_t shard[4][4] = {
+		{0xFF, 0xFF, 0xFF, 0xFF},
+		{0xFF, 0xFF, 0xFF, 0xFF},
+		{0xFF, 0xFF, 0xFF, 0xFF},
+		{0xD4, 0xD4, 0xD4, 0xD4},
+	};
 	int x, y;
 
 	for(y = 0; y < 16; y++) {
@@ -167,6 +196,8 @@ void glsetup() {
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, BLOBSIZE, BLOBSIZE, GL_LUMINANCE, GL_UNSIGNED_BYTE, blobtexture);
 	glBindTexture(GL_TEXTURE_2D, TEX_VIGNETTE);
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 32, 32, GL_LUMINANCE, GL_UNSIGNED_BYTE, vignette);
+	glBindTexture(GL_TEXTURE_2D, TEX_SHARD);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_LUMINANCE, 4, 4, GL_LUMINANCE, GL_UNSIGNED_BYTE, shard);
 
 	ballquad = gluNewQuadric();
 }
@@ -351,6 +382,48 @@ void drawmembrane() {
 
 }
 
+void draw_shards()
+{
+	list_t*	p;
+	list_t*	h;
+	p = h = shards;
+
+	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, TEX_SHARD);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	if (p)
+	do {
+		shard_t*	shard;
+		
+		shard = p->data;
+		p = p->succ;
+
+		int px = shard->x - WORLDW/2;
+		int py = HEIGHTSCALE - SINKHEIGHTTOP * shard->y;
+		int pz = shard->z - WORLDH/2;
+		glPushMatrix();
+		glMatrixMode(GL_MODELVIEW);
+		//glLoadIdentity();
+		glTranslatef(px, py, pz);
+		glRotatef(180+eye_angle * 360 / 256.f, 0, 1, 0);
+		glBegin(GL_QUADS);
+		glTexCoord2d(0, 1);
+		glVertex3d(-SHARDW, -SHARDH, 0);
+		glTexCoord2d(0, 0);
+		glVertex3d(-SHARDW, +SHARDH, 0);
+		glTexCoord2d(1, 0);
+		glVertex3d(+SHARDW, +SHARDH, 0);
+		glTexCoord2d(1, 1);
+		glVertex3d(+SHARDW, -SHARDH, 0);
+		glEnd();
+		glPopMatrix();
+
+	} while (p != h);
+	glPopAttrib();
+}
+
 void drawscene(int with_membrane) {
 	int i, j;
 	GLfloat light[4];
@@ -403,10 +476,7 @@ void drawscene(int with_membrane) {
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, light);
 			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40);*/
 
-			int y = (worldmap[b->y - 8][b->x - 8].sinkage +
-				worldmap[b->y + 8][b->x - 8].sinkage +
-				worldmap[b->y + 8][b->x + 8].sinkage +
-				worldmap[b->y - 8][b->x + 8].sinkage) / 4;
+			int y = get_brick_y(b);
 			coords[0][0] = b->x - 8 - WORLDW / 2;
 			coords[0][1] = b->y - 8 - WORLDH / 2;
 			coords[1][0] = b->x - 8 - WORLDW / 2;
@@ -432,6 +502,9 @@ void drawscene(int with_membrane) {
 			glPopAttrib();
 		}
 	}
+
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
+	draw_shards();
 
 	light[0] = .2;
 	light[1] = .2;
@@ -464,6 +537,7 @@ void drawscene(int with_membrane) {
 			draw_ball(ball[j].xhist[i], ball[j].yhist[i], 5);
 		}
 	}
+
 }
 
 void drawframe() {
@@ -660,9 +734,32 @@ void mirror(double *x1, double *y1, double x2, double y2) {
 	*y1 -= y2 * 2;
 }
 
+void add_shards(int x, int y, int z)
+{
+	shard_t*	shard;
+
+	for (int i = 0; i < 20; ++i) {
+		double angle = rand()%360;
+		angle = angle * 2*M_PI / 360.0;
+
+		shard = malloc(sizeof(shard_t));
+		shard->x = x + cos(angle) * (1.7+rand()%4);
+		shard->y = y + rand()%11-5;
+		shard->z = z + sin(angle) * (1.7+rand()%4);
+		shard->xvel = 10*cos(angle);
+		shard->yvel = 0;
+		shard->zvel = 10*sin(angle);
+		shard->ttl = 230 + rand()%200;
+
+		list_add(&shards, shard);
+	}
+}
+
 void removebrick(struct brick *b) {
 	b->flags &= ~BRICKF_LIVE;
 	worldmap_valid = 0;
+
+	add_shards(b->x, get_brick_y(b), b->y);
 
 	bricks_left--;
 	if(!bricks_left) {
@@ -722,10 +819,45 @@ void bonus_reset()
 	bigint_set(bonus, 1);
 }
 
+void update_particles()
+{
+	list_t*	p;
+	list_t*	h;
+	p = h = shards;
+
+	if (p)
+	do {
+		shard_t*	shard = p->data;
+		p = p->succ;
+		shard->visited = false;
+	} while (p != h);
+
+	while (shards) {
+		shard_t*	shard = shards->data;
+		
+		if (shard->visited)
+			break;
+		shard->visited = true;
+		shard->ttl -= 10;
+		if (shard->ttl < 0) {
+			free(shard);
+			list_remove(&shards);
+		} else {
+			shard->x += 0.01 * shard->xvel;
+			shard->y += 0.01 * shard->yvel;
+			shard->z += 0.01 * shard->zvel;
+			shard->yvel += 8.79;
+			shards = shards->succ;
+		}
+	}
+}
+
 void physics() {
 	int i, j;
 	double r, size;
 	double prevx, prevy;
+
+	update_particles();
 
 	paddle_vel = (paddle_vel * .9 + key_dx * MAX_PADDLE_VEL * .1);
 	if(gameover) paddle_vel = (paddle_vel * .9 + 10);
