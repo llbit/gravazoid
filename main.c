@@ -66,6 +66,8 @@ enum {
 
 typedef struct shard {
 	bool		visited;
+	int		visible;
+	int		color;
 	float		x;
 	float		y;
 	float		z;
@@ -384,6 +386,7 @@ void drawmembrane() {
 
 void draw_shards()
 {
+	GLfloat light[4];
 	list_t*	p;
 	list_t*	h;
 	p = h = shards;
@@ -400,9 +403,15 @@ void draw_shards()
 		shard = p->data;
 		p = p->succ;
 
+		if (!shard->visible) continue;
 		int px = shard->x - WORLDW/2;
 		int py = HEIGHTSCALE - SINKHEIGHTTOP * shard->y;
 		int pz = shard->z - WORLDH/2;
+		light[0] = colors[shard->color][0] / 255.;
+		light[1] = colors[shard->color][1] / 255.;
+		light[2] = colors[shard->color][2] / 255.;
+		light[3] = 0.3f;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 		glPushMatrix();
 		glMatrixMode(GL_MODELVIEW);
 		//glLoadIdentity();
@@ -503,7 +512,6 @@ void drawscene(int with_membrane) {
 		}
 	}
 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 	draw_shards();
 
 	light[0] = .2;
@@ -734,7 +742,7 @@ void mirror(double *x1, double *y1, double x2, double y2) {
 	*y1 -= y2 * 2;
 }
 
-void add_shards(int x, int y, int z)
+void add_shards(int x, int y, int z, int color)
 {
 	shard_t*	shard;
 
@@ -743,6 +751,8 @@ void add_shards(int x, int y, int z)
 		angle = angle * 2*M_PI / 360.0;
 
 		shard = malloc(sizeof(shard_t));
+		shard->visible = rand()%2;
+		shard->color = color;
 		shard->x = x + cos(angle) * (1.7+rand()%4);
 		shard->y = y + rand()%11-5;
 		shard->z = z + sin(angle) * (1.7+rand()%4);
@@ -759,7 +769,7 @@ void removebrick(struct brick *b) {
 	b->flags &= ~BRICKF_LIVE;
 	worldmap_valid = 0;
 
-	add_shards(b->x, get_brick_y(b), b->y);
+	add_shards(b->x, get_brick_y(b), b->y, b->color);
 
 	bricks_left--;
 	if(!bricks_left) {
@@ -837,12 +847,13 @@ void update_particles()
 		
 		if (shard->visited)
 			break;
-		shard->visited = true;
 		shard->ttl -= 10;
 		if (shard->ttl < 0) {
 			free(shard);
 			list_remove(&shards);
 		} else {
+			shard->visited = true;
+			shard->visible = rand()%2;
 			shard->x += 0.01 * shard->xvel;
 			shard->y += 0.01 * shard->yvel;
 			shard->z += 0.01 * shard->zvel;
