@@ -253,55 +253,10 @@ void draw_ball(double bx, double by, int segments) {
 void drawmembrane() {
 	int x, y;
 
-	glBindTexture(GL_TEXTURE_2D, TEX_VIGNETTE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-	glColor3d(1, 1, 1);
-	glDepthMask(GL_FALSE);
-
-	glBegin(GL_QUADS);
-	glTexCoord2d(0, 0);
-	glVertex3d(-VIGNETTE_BRDR - WORLDW / 2, 0, -VIGNETTE_BRDR - WORLDH / 2);
-	glTexCoord2d(0, 1);
-	glVertex3d(-VIGNETTE_BRDR - WORLDW / 2, 0, +VIGNETTE_BRDR + WORLDH / 2);
-	glTexCoord2d(1, 1);
-	glVertex3d(+VIGNETTE_BRDR + WORLDW / 2, 0, +VIGNETTE_BRDR + WORLDH / 2);
-	glTexCoord2d(1, 0);
-	glVertex3d(+VIGNETTE_BRDR + WORLDW / 2, 0, -VIGNETTE_BRDR - WORLDH / 2);
-	glEnd();
-
-#if 0
-	for(y = 0; y < WORLDH-1; y += MEMBRANESTEP) {
-		glBegin(GL_QUAD_STRIP);
-		for(x = 0; x < WORLDW; x += MEMBRANESTEP) {
-			glTexCoord2d((VIGNETTE_BRDR + x) / (double)(2*VIGNETTE_BRDR+WORLDW),
-					(VIGNETTE_BRDR + y) / (double)(2*VIGNETTE_BRDR+WORLDH));
-			glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y][x].sinkage, y - WORLDH / 2);
-			glTexCoord2d((VIGNETTE_BRDR + x) / (double)(2*VIGNETTE_BRDR+WORLDW),
-					(VIGNETTE_BRDR + y + MEMBRANESTEP) / (double)(2*VIGNETTE_BRDR+WORLDH));
-			if(y + MEMBRANESTEP >= WORLDH) {
-				glVertex3d(x - WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
-			} else {
-				glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y + MEMBRANESTEP][x].sinkage, y + MEMBRANESTEP - WORLDH / 2);
-			}
-		}
-		glTexCoord2d((VIGNETTE_BRDR + x) / (double)(2*VIGNETTE_BRDR+WORLDW),
-				(VIGNETTE_BRDR + y) / (double)(2*VIGNETTE_BRDR+WORLDH));
-		glVertex3d(WORLDW / 2, 0, y - WORLDH / 2);
-		glTexCoord2d((VIGNETTE_BRDR + x) / (double)(2*VIGNETTE_BRDR+WORLDW),
-				(VIGNETTE_BRDR + y + MEMBRANESTEP) / (double)(2*VIGNETTE_BRDR+WORLDH));
-		glVertex3d(WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
-		glEnd();
-	}
-#endif
-
 	glBindTexture(GL_TEXTURE_2D, TEX_GRID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_DST_COLOR, GL_ZERO);
 	glDepthMask(GL_TRUE);
 	glDisable(GL_CULL_FACE);
 	glColor3ub(0x62, 0xBC, 0xE8);
@@ -366,7 +321,33 @@ void drawmembrane() {
 		glEnd();
 	}
 
+#if 1
+	glBindTexture(GL_TEXTURE_2D, TEX_VIGNETTE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+
+	glColor3d(1, 1, 1);
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+
+	glBegin(GL_QUADS);
+	glTexCoord2d(0, 0);
+	glVertex3d(-VIGNETTE_BRDR - WORLDW / 2, 0, -VIGNETTE_BRDR - WORLDH / 2);
+	glTexCoord2d(0, 1);
+	glVertex3d(-VIGNETTE_BRDR - WORLDW / 2, 0, +VIGNETTE_BRDR + WORLDH / 2);
+	glTexCoord2d(1, 1);
+	glVertex3d(+VIGNETTE_BRDR + WORLDW / 2, 0, +VIGNETTE_BRDR + WORLDH / 2);
+	glTexCoord2d(1, 0);
+	glVertex3d(+VIGNETTE_BRDR + WORLDW / 2, 0, -VIGNETTE_BRDR - WORLDH / 2);
+	glEnd();
+
 	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+#endif
 
 }
 
