@@ -958,7 +958,7 @@ void load_resources()
 	fp = fopen("test.shape", "r");
 	if (fp != NULL)
 		testshape = load_shape(fp);*/
-	font = load_font("testfont.ttf", 100.f, 3);
+	font = load_font("Pusselbit.ttf", 100.f, 3);
 	score = new_bigint(0);
 	bonus = new_bigint(1);
 	diff = new_bigint(0);
