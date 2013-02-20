@@ -5,7 +5,7 @@ LDFLAGS=-lSDL -lGLU -lGL -g -pg
 
 all:	game vex
 
-game:	main.o render.o shape.o cttf.o text.o bigint.o list.o
+game:	main.o render.o shape.o cttf.o text.o bigint.o list.o sfx.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
 vex:	vex.o shape.o render.o
@@ -16,10 +16,11 @@ clean:
 	rm shape.o
 	rm cttf.o
 	rm text.o
+	rm sfx.o
 	rm vex
 	rm game
 
-main.o:	main.c ark.h list.h bigint.h text.h render.h cttf/shape.h
+main.o:	main.c ark.h list.h bigint.h text.h render.h sfx.h cttf/shape.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 vex.o: vex.c
@@ -41,4 +42,7 @@ cttf.o: cttf/cttf.c
 	${CC} ${CFLAGS} -c $< -o $@
 
 shape.o: cttf/shape.c
+	${CC} ${CFLAGS} -c $< -o $@
+
+sfx.o:	sfx.c sfx.h music_level.h drums.h
 	${CC} ${CFLAGS} -c $< -o $@

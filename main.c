@@ -12,6 +12,7 @@
 #include "bigint.h"
 #include "cttf/shape.h"
 #include "list.h"
+#include "sfx.h"
 
 //static shape_t* testshape = NULL;
 
@@ -698,9 +699,11 @@ void handle_key(SDLKey key, int down) {
 
 	switch(key) {
 		case SDLK_q:
+		case SDLK_ESCAPE:
 			running = 0;
 			break;
 		case SDLK_h:
+		case SDLK_LEFT:
 			if(down) {
 				key_dx = -1;
 			} else {
@@ -708,6 +711,7 @@ void handle_key(SDLKey key, int down) {
 			}
 			break;
 		case SDLK_l:
+		case SDLK_RIGHT:
 			if(down) {
 				key_dx = 1;
 			} else {
@@ -975,7 +979,10 @@ int main(int argc, const char** argv) {
 			fullscreen = false;
 	}
 
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
+	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_AUDIO) < 0) {
+		fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
+		return 1;
+	}
 	atexit(SDL_Quit);
 
 	load_resources();
@@ -984,6 +991,9 @@ int main(int argc, const char** argv) {
 	glsetup();
 
 	SDL_ShowCursor(SDL_DISABLE);
+
+	sfx_init();
+	sfx_startsong(0);
 
 	physics();
 	millis = SDL_GetTicks();
