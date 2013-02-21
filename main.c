@@ -916,6 +916,8 @@ void physics() {
 				if(ball[i].flags & BALLF_OUTSIDE) {
 					if(r > 2 * INRADIUS) {
 						ball[i].flags = BALLF_HELD;
+						sfx_gameover();
+						sfx_startsong(0);
 						if(lives) {
 							lives--;
 						} else {
@@ -939,12 +941,16 @@ void physics() {
 						mirror(&ball[i].dx, &ball[i].dy, normx, normy);
 						ball[i].x = prevx;
 						ball[i].y = prevy;
+						sfx_hitbase();
 					}
 				}
 			} else {
 				for(j = 0; j < nbrick; j++) {
 					if(brick[j].flags & BRICKF_LIVE) {
-						if(collide(&ball[i], prevx, prevy, &brick[j])) break;
+						if(collide(&ball[i], prevx, prevy, &brick[j])) {
+							sfx_hitbrick();
+							break;
+						}
 					}
 				}
 			}
@@ -1068,7 +1074,9 @@ void on_action()
 	if(gameover) {
 		gameover = 0;
 		resetlevel(1);
+		sfx_startsong(0);
 	} else {
+		sfx_advance();
 		for(i = 0; i < nball; i++) {
 			if(ball[i].flags & BALLF_HELD) {
 				ball[i].flags &= ~BALLF_HELD;

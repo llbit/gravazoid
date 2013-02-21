@@ -92,6 +92,10 @@ static struct player {
 	.noise = 1
 };
 
+static volatile u8 allow_advance;
+static volatile u16 bleepfreq, bleepvolume;
+static u16 bleepphase;
+
 static u8 *drums[2] = {kickdata, snaredata};
 
 static u8 shiftm1[16] = {
@@ -103,7 +107,7 @@ static u8 shiftm1[16] = {
 
 static s16 nextsample() {
 	int c;
-	s16 acc;
+	int acc;
 
 	if(!player.divtimer) {
 		if(!player.ttimer) {
@@ -176,10 +180,10 @@ static s16 nextsample() {
 			}
 			player.trackpos++;
 			player.trackpos %= TRACKLEN;
-			if(!player.trackpos) {
+			if(!player.trackpos && allow_advance) {
 				player.songpos++;
 				if(player.songpos == SONGLEN) {
-					player.songpos = 0;
+					player.songpos = 1;
 				}
 			}
 		}
@@ -266,6 +270,14 @@ static s16 nextsample() {
 			;
 	}
 
+	//acc /= 2;
+
+	if(bleepvolume) {
+		bleepphase += bleepfreq;
+		acc += bleepvolume * 2 * ((bleepphase & 0x8000)? 1 : -1);
+		bleepvolume--;
+	}
+
 	return acc;
 }
 
@@ -302,5 +314,24 @@ void sfx_startsong(int num) {
 	SDL_PauseAudio(1);
 	memcpy(channel, initchannel, sizeof(channel));
 	memcpy(&player, &initplayer, sizeof(player));
+	allow_advance = 0;
 	SDL_PauseAudio(0);
 }
+
+void sfx_advance() {
+	allow_advance = 1;
+}
+
+void sfx_hitbase() {
+	bleepfreq = 554 * 0x10000 / 44100;
+	bleepvolume = 3000;
+}
+
+void sfx_hitbrick() {
+	bleepfreq = 1108 * 0x10000 / 44100;
+	bleepvolume = 3000;
+}
+
+void sfx_gameover() {
+}
+
