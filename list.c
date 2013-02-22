@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "list.h"
 
+/* Appends the new object to the end of the list
+ */
 void list_add(list_t** list, void* object)
 {
 	assert(list != NULL);
@@ -20,10 +22,20 @@ void list_add(list_t** list, void* object)
 	}
 }
 
-void list_remove(list_t** list)
+/* Remove the first element of the list, if the list is
+ * non-empty and return the data value for that element.
+ * If the list was empty, the return value is NULL.
+ */
+void* list_remove(list_t** list)
 {
+	void* data;
+
 	assert(list != NULL);
-	if (*list == NULL) return;
+
+	if (*list == NULL) return NULL;
+
+	data = (*list)->data;
+
 	if ((*list)->succ == *list) {
 		free(*list);
 		*list = NULL;
@@ -35,5 +47,100 @@ void list_remove(list_t** list)
 		free(*list);
 		*list = succ;
 	}
+
+	return data;
+}
+
+/* Remove first element that has a data pointer
+ * equal to the data argument from the list.
+ *
+ * This function may remove 1 or 0 elements from
+ * the list depending on if the specified data is
+ * in the list or not. If it is in the list, the
+ * first list element containing the data will
+ * be removed.
+ *
+ * The return value is the number of list elements
+ * that were removed.
+ */
+int list_remove_item(list_t** list, void* data)
+{
+	list_t*	p;
+
+	assert(list != NULL);
+
+	p = *list;
+	if (p)
+	do {
+		if (p->data == data) {
+			if (p->succ == p) {
+				free(p);
+				*list = NULL;
+				return 1;
+			} else {
+				list_t*	pred = p->pred;
+				list_t*	succ = p->succ;
+				pred->succ = succ;
+				succ->pred = pred;
+				free(p);
+				if (p == *list) {
+					*list = succ;
+				}
+				return 1;
+			}
+		}
+		p = p->succ;
+	} while (p != *list);
+
+	// no item was removed
+	return 0;
+}
+
+/* Delete all items from the list.
+ *
+ * Returns the numer of items that were deleted.
+ */
+int free_list(list_t** list)
+{
+	int	count = 0;
+	list_t*	p;
+	list_t*	h;
+
+	if (list == NULL) return 0;
+	if (*list == NULL) return 0;
+
+	p = h = *list;
+	do {
+		list_t*	t = p;
+		p = p->succ;
+		free(t);
+		count++;
+	} while (p != h);
+	*list = NULL;
+	return count;
+}
+
+int list_length(list_t* list)
+{
+	list_t*	p = list;
+	int	len = 0;
+	if (p)
+	do {
+		p = p->succ;
+		len += 1;
+	} while (p != list);
+	return len;
+}
+
+int list_contains(list_t* list, void* data)
+{
+	list_t*	p = list;
+	if (p)
+	do {
+		if (p->data == data)
+			return 1;
+		p = p->succ;
+	} while (p != list);
+	return 0;
 }
 
