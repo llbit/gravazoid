@@ -17,29 +17,26 @@
  * along with cTTF; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef CTTF_SHAPE_H
-#define CTTF_SHAPE_H
+#ifndef TTF_TYPESET_H
+#define TTF_TYPESET_H
 
-#include <stdio.h>
-#include "vector.h"
+#include "ttf.h"
 
-typedef struct shape	shape_t;
+typedef struct {
+	ttf_t*		typeface;
+	char**		words;
+	int*		wc;
+	float*		spw;
+	unsigned	nwords;
+	unsigned	max;
+	float		mincwidth;
+	float		spacewidth;
+} paragraph_t;
 
-shape_t* new_shape();
-void free_shape(shape_t** shape);
-void shape_add_vec(shape_t* shape, float x, float y);
-void shape_add_seg(shape_t* shape, int n, int m);
-shape_t* load_shape(FILE* file);
-void write_shape(FILE* file, shape_t* shape);
-
-struct shape {
-	vector_t*	vec;
-	int		nvec;
-	int		maxvec;
-	int*		seg;
-	int		nseg;
-	int		maxseg;
-};
+paragraph_t* new_paragraph(ttf_t* typeface);
+void free_paragraph(paragraph_t**);
+void typeset(paragraph_t* text, float M, int justify);
+void add_words(paragraph_t*, const char*);
 
 #endif
 

@@ -17,29 +17,26 @@
  * along with cTTF; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef CTTF_SHAPE_H
-#define CTTF_SHAPE_H
+#include <SDL/SDL.h>
+#include <SDL/SDL_opengl.h>
+#include "shape.h"
 
-#include <stdio.h>
-#include "vector.h"
+void render_shape(shape_t* shape)
+{
+	int i;
 
-typedef struct shape	shape_t;
+	glBegin(GL_LINES);
 
-shape_t* new_shape();
-void free_shape(shape_t** shape);
-void shape_add_vec(shape_t* shape, float x, float y);
-void shape_add_seg(shape_t* shape, int n, int m);
-shape_t* load_shape(FILE* file);
-void write_shape(FILE* file, shape_t* shape);
+	for (i = 0; i < shape->nseg; ++i) {
+		int	n;
+		int	m;
 
-struct shape {
-	vector_t*	vec;
-	int		nvec;
-	int		maxvec;
-	int*		seg;
-	int		nseg;
-	int		maxseg;
-};
+		n = shape->seg[i*2];
+		m = shape->seg[i*2+1];
+		glVertex3f(shape->vec[n].x, shape->vec[n].y, 0.f);
+		glVertex3f(shape->vec[m].x, shape->vec[m].y, 0.f);
+	}
 
-#endif
+	glEnd();
+}
 

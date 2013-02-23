@@ -3,70 +3,54 @@
  *
  * This file is part of cTTF.
  *
- * cTTF is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * cTTF is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
  *
  * cTTF is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
  * You should have received a copy of the GNU General Public License
- * along with cTTF.  If not, see <http://www.gnu.org/licenses/>.
+ * along with cTTF; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 /*
- * see cttf.c for version history
+ * see ttf.c for version history
  */
 
 #ifndef CTTF_CTTF_H
 #define CTTF_CTTF_H
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include "vector.h"
 #include "shape.h"
 
-#if 1
-#define SWAP_ENDIAN_WORD(a) \
-	((((0xFF00 & a) >> 8) | ((0x00FF & a) << 8)))
-#define SWAP_ENDIAN_DWORD(a) \
-	(((0xFF000000 & a) >> 24) | ((0x00FF0000 & a) >> 8) | \
-	 ((0x0000FF00 & a) << 8) | ((0x000000FF & a) << 24))
-#else
-#define SWAP_ENDIAN_WORD(a) (a)
-#define SWAP_ENDIAN_DWORD(a) (a)
-#endif
-
-
 // forward declarations
-typedef struct ttf_gd_list	ttf_gd_list_t;
 typedef struct ttf		ttf_t;
 typedef struct ttf_glyph_header	ttf_glyph_header_t;
 typedef struct ttf_glyph_data	ttf_glyph_data_t;
 typedef struct ttf_table_header	ttf_table_header_t;
 
 // begin API
-ttf_t* ttf_new();
-void ttf_free(ttf_t** obj);
+ttf_t* new_ttf();
+void free_ttf(ttf_t** obj);
 ttf_t* ttf_load(FILE* file);
+const char* ttf_strerror();
 void ttf_set_ls_aw(
 		ttf_t*			ttfobj,
 		ttf_glyph_header_t*	gh,
 		ttf_glyph_data_t*	gd,
 		uint16_t		i);
-void ttf_read_glyph(ttf_t*		ttfobj,
+int ttf_read_glyph(ttf_t*		ttfobj,
 		FILE*			file,
 		ttf_glyph_header_t*	gh,
 		ttf_glyph_data_t*	gd,
 		ttf_table_header_t*	glyf,
-		uint32_t*		indextolocation,
 		uint32_t		i);
-void ttf_gd_list_add(
-		ttf_gd_list_t**		list,
-		ttf_glyph_data_t*	data);
-void ttf_free_gd_list(ttf_gd_list_t**	obj);
 void ttf_interpolate(
 		ttf_t*			ttfobj,
 		uint16_t		chr,
@@ -75,19 +59,12 @@ void ttf_interpolate(
 		float			scale);
 
 // get width of a glyph
-float ttf_get_chr_width(ttf_t* ttfobj, uint16_t chr);
+float ttf_char_width(ttf_t* ttfobj, uint16_t chr);
+
+float ttf_line_width(ttf_t* type, const char* line);
 
 // export a TTF character to a vector list
-void ttf_export_chr_shape(
-		ttf_t*			ttfobj,
-		uint16_t		chr,
-		shape_t*		shape,
-		float			scale);
-
-struct ttf_gd_list {
-	ttf_gd_list_t*		succ;
-	ttf_glyph_data_t*	data;
-};
+shape_t* ttf_export_chr_shape(ttf_t* ttfobj, uint16_t chr);
 
 typedef enum ttf_markings {
 	TTFavailable,
@@ -123,7 +100,7 @@ typedef struct ttf_font_header
 	int16_t		index_to_loc_format;
 	int16_t		glyph_data_format;
 
-} ttf_font_header_t;
+} ttf_head_t;
 
 // unused?
 typedef struct ttf_vertex
@@ -143,11 +120,11 @@ typedef struct ttf_table_directory
 	uint16_t	range_shift;
 } ttf_tbl_directory_t;
 
-typedef struct ttf_encoding_table_info
+typedef struct ttf_cmap_table_header
 {
 	uint16_t	table_version;
-	uint16_t	num_encoding_tables;
-} ttf_enctbl_info_t;
+	uint16_t	num_tables;
+} ttf_cmap_t;
 
 typedef struct ttf_encoding_table_header
 {
@@ -164,10 +141,10 @@ typedef struct ttf_map_format0_header
 	uint8_t		glyph_id_array[256];
 } ttf_mapfmt0_header_t;
 
-typedef struct ttf_map_format2_header
+/*typedef struct ttf_map_format2_header
 {
 	// TODO
-} ttf_mapfmt2_header_t;
+} ttf_mapfmt2_header_t;*/
 
 typedef struct ttf_map_format4_header
 {
@@ -186,10 +163,10 @@ typedef struct ttf_map_format4_header
 	uint16_t*	glyph_id_array;
 } ttf_mapfmt4_header_t;
 
-typedef struct ttf_map_format6_header
+/*typedef struct ttf_map_format6_header
 {
 	// TODO
-} ttf_mapfmt6_header_t;
+} ttf_mapfmt6_header_t;*/
 
 struct ttf_glyph_header
 {
@@ -268,7 +245,7 @@ typedef struct ttf_horizontal_header
 	int16_t		reserved05;
 	int16_t		metricDataFormat;
 	uint16_t	num_h_metrics;
-} ttf_horizontal_header_t;
+} ttf_hhea_t;
 
 typedef struct ttf_long_hmetrics
 {
@@ -281,7 +258,7 @@ struct ttf_glyph_data
 	int16_t*	px;
 	int16_t*	py;
 	uint16_t*	endpoints;
-	bool*		state;
+	int*		state;
 	uint16_t	npoints;
 	uint8_t		ncontours;
 	uint16_t	aw;
@@ -297,8 +274,8 @@ struct ttf {
 	uint16_t		ppem;
 	uint16_t		resolution;
 	uint8_t			interpolation_level;
-	bool			zerobase;
-	bool			zerolsb;
+	int				zerobase;
+	int				zerolsb;
 	uint32_t		nhmtx;
 	ttf_lhmetrics_t*	plhmtx;
 	int16_t*		plsb;
@@ -306,39 +283,19 @@ struct ttf {
 	int16_t			ymin;
 	int16_t			xmax;
 	int16_t			ymax;
+
+	uint32_t*		idx2loc;
+	ttf_hhea_t*		hh;
+	ttf_head_t*		fh;
+
+	ttf_table_header_t*	cmap;
+	ttf_table_header_t*	glyf;
+	ttf_table_header_t*	head;
+	ttf_table_header_t*	hhea;
+	ttf_table_header_t*	hmtx;
+	ttf_table_header_t*	loca;
+	ttf_table_header_t*	maxp;
 };
-
-
-/*class cTTF
-{
-public:
-	cTTF();
-	~cTTF();
-
-	void Load(const jsh::string& filename);
-
-	void Convert(cMesh& mesh, uint16_t c) const;
-	
-	precision PointToPixelScale() const {return (ppem * resolution) / (72 * (precision)upem);}
-	uint16_t PixelSize(uint16_t point_size) const {return uint16_t(point_size * PointToPixelScale() + 0.5f);}
-	uint16_t RasterWidth() const {return PixelSize(xmax - xmin);}
-	uint16_t RasterHeight() const {return PixelSize(ymax - ymin);}
-	t_real GetWidth(uint16_t c) {return (t_real)(glyph_data[glyph_table[c]].aw) / upem;}
-
-	void Resolution(uint16_t res) {resolution = res;}
-	void EMPointSize(uint16_t point_size) {ppem = point_size;}
-
-	void InterpolationLevel(uint8_t level) {interpolation_level = level;}
-	uint8_t InterpolationLevel() const {return interpolation_level;}
-
-private:
-	void Reset();
-
-	void ReadGlyph(cFile&, ttf_glyph_header_t&, ttf_glyph_data_t&, ttf_table_header_t&, uint32_t*, uint32_t);
-	uint16_t Interpolate(uint16_t, jsh::vector2<t_real>*, jsh::vector2<t_real>*, uint16_t&, uint16_t) const;
-	void ttf_set_ls_aw(ttf_glyph_header_t&, ttf_glyph_data_t&, uint16_t);
-	void Interpolate(uint16_t c, jsh::vector2<t_real>*& points, uint16_t*& endpoints, uint16_t& npoints, precision scale) const;
-};*/
 
 #endif
 

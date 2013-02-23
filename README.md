@@ -1,6 +1,15 @@
-#Arkanoid
+Arkanoid
+========
 
-##Dependencies
+A twisted arkanoid clone by Jesper Öqvist and Linus Åkesson.
+
+License
+-------
+
+TODO
+
+Dependencies
+------------
 
 Ubuntu packages:
 

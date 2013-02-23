@@ -17,29 +17,32 @@
  * along with cTTF; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef CTTF_SHAPE_H
-#define CTTF_SHAPE_H
-
+/* cTTF Open Type debug and test program
+ */
 #include <stdio.h>
-#include "vector.h"
 
-typedef struct shape	shape_t;
+#include "ttf.h"
 
-shape_t* new_shape();
-void free_shape(shape_t** shape);
-void shape_add_vec(shape_t* shape, float x, float y);
-void shape_add_seg(shape_t* shape, int n, int m);
-shape_t* load_shape(FILE* file);
-void write_shape(FILE* file, shape_t* shape);
+int main(int argc, const char** argv)
+{
+	const char*	fn = "font.ttf";
+	FILE*		fp;
+	ttf_t*		ttf;
 
-struct shape {
-	vector_t*	vec;
-	int		nvec;
-	int		maxvec;
-	int*		seg;
-	int		nseg;
-	int		maxseg;
-};
+	if (argc > 1) {
+		fn = argv[1];
+	}
 
-#endif
+	fp = fopen(fn, "rb");
+	if (!fp) {
+		perror("main");
+		return 1;
+	}
+	ttf = ttf_load(fp);
+	if (!ttf) {
+		fprintf(stderr, "Error while loading font file %s:\n%s\n",
+				fn, ttf_strerror());
+	}
 
+	return 0;
+}

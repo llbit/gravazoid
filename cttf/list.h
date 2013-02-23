@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2011 Jesper Öqvist <jesper@llbit.se>
+ * Copyright (c) 2011-2012 Jesper Öqvist <jesper@llbit.se>
  *
  * This file is part of cTTF.
  *
@@ -17,29 +17,32 @@
  * along with cTTF; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef CTTF_SHAPE_H
-#define CTTF_SHAPE_H
+#ifndef CTTF_LIST_H
+#define CTTF_LIST_H
 
-#include <stdio.h>
-#include "vector.h"
-
-typedef struct shape	shape_t;
-
-shape_t* new_shape();
-void free_shape(shape_t** shape);
-void shape_add_vec(shape_t* shape, float x, float y);
-void shape_add_seg(shape_t* shape, int n, int m);
-shape_t* load_shape(FILE* file);
-void write_shape(FILE* file, shape_t* shape);
-
-struct shape {
-	vector_t*	vec;
-	int		nvec;
-	int		maxvec;
-	int*		seg;
-	int		nseg;
-	int		maxseg;
+typedef struct list	list_t;
+struct list {
+	list_t*		succ;
+	list_t*		pred;
+	void*		data;
 };
+
+// if *list == NULL, create a new list otherwise append
+void list_add(list_t** list, void* object);
+
+// remove the first item from the list
+void* list_remove(list_t** list);
+
+// remove element containing data from list
+int list_remove_item(list_t** list, void* data);
+
+// remove all items from the list
+int free_list(list_t** list);
+
+int list_length(list_t* list);
+
+// returns nonzero if list contains data
+int list_contains(list_t* list, void* data);
 
 #endif
 

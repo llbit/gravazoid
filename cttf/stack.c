@@ -17,29 +17,55 @@
  * along with cTTF; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef CTTF_SHAPE_H
-#define CTTF_SHAPE_H
+#include <stdlib.h>
+#include <assert.h>
+#include "stack.h"
 
-#include <stdio.h>
-#include "vector.h"
+void stack_push(stack_t** stack, void* data)
+{
+	stack_t*	p;
+	assert(stack != NULL);
 
-typedef struct shape	shape_t;
+	p = malloc(sizeof(stack_t));
+	p->data = data;
 
-shape_t* new_shape();
-void free_shape(shape_t** shape);
-void shape_add_vec(shape_t* shape, float x, float y);
-void shape_add_seg(shape_t* shape, int n, int m);
-shape_t* load_shape(FILE* file);
-void write_shape(FILE* file, shape_t* shape);
+	if (*stack == NULL)
+		p->next = NULL;
+	else
+		p->next = *stack;
 
-struct shape {
-	vector_t*	vec;
-	int		nvec;
-	int		maxvec;
-	int*		seg;
-	int		nseg;
-	int		maxseg;
-};
+	*stack = p;
+}
 
-#endif
+void* stack_pop(stack_t** stack)
+{
+	void*		data;
+	stack_t*	next;
+	assert(stack != NULL);
+	assert(*stack != NULL);
+
+	data = (*stack)->data;
+	next = (*stack)->next;
+	free(*stack);
+	*stack = next;
+	return data;
+}
+
+void* stack_peek(stack_t* stack)
+{
+	assert(stack != NULL);
+
+	return stack->data;
+}
+
+void free_stack(stack_t** stack)
+{
+	assert(stack != NULL);
+
+	while (*stack != NULL) {
+		stack_t*	p = *stack;
+		*stack = p->next;
+		free(p);
+	}
+}
 

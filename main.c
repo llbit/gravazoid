@@ -8,10 +8,10 @@
 
 #include "ark.h"
 #include "render.h"
-#include "text.h"
+#include "cttf/text.h"
 #include "bigint.h"
 #include "cttf/shape.h"
-#include "list.h"
+#include "cttf/list.h"
 #include "sfx.h"
 
 //static shape_t* testshape = NULL;
@@ -29,6 +29,7 @@ static int colors[][3] = {
 static int ball_color[3] = { 0x33, 0x8C, 0x5C };
 
 static void draw_text();
+static void draw_utf_word(font_t* font, const char* word, float x, float y);
 
 static int running = 1;
 SDL_Surface *screen;
@@ -44,7 +45,7 @@ static int paddle_vel = 0;
 int lives;
 int gameover = 1;
 
-static vfont_t* font = NULL;
+static font_t* font = NULL;
 
 SDL_sem *semaphore;
 
@@ -646,7 +647,8 @@ void drawframe() {
 	draw_text();
 }
 
-void draw_text() {
+static void draw_text()
+{
 	char ibuf[64];
 	char buf[64];
 	int i;
@@ -655,7 +657,7 @@ void draw_text() {
 	bigint_to_str(score, ibuf, sizeof ibuf);
 	snprintf(buf, sizeof buf, "Score: %s", ibuf);
 	glColor3f(1.f, 1.f, 1.f);
-	draw_utf_str(font, buf, 2.f, 4.f);
+	draw_utf_word(font, buf, 2.f, 4.f);
 
 	// score_up:
 	if (score_up > 0) {
@@ -663,18 +665,18 @@ void draw_text() {
 		bigint_to_str(diff, buf+1, sizeof buf - 1);
 		float v = logf(score_up) / logf(1000);
 		glColor3f(v, v, v);
-		draw_utf_str(font, buf, 2.f, 4.f + 150.f*v);
+		draw_utf_word(font, buf, 2.f, 4.f + 150.f*v);
 	}
 
 	snprintf(buf, sizeof(buf), "%3d fps", fps);
 	glColor3f(1.f, 1.f, 1.f);
-	draw_utf_str(font, buf, 2.f, screen->h - 100);
+	draw_utf_word(font, buf, 2.f, screen->h - 100);
 	for(i = 0; i < lives; i++) {
-		draw_utf_str(font, "*", screen->w - 300 + 60 * i, screen->h - 100);
+		draw_utf_word(font, "*", screen->w - 300 + 60 * i, screen->h - 100);
 	}
 
 	if(gameover) {
-		draw_utf_str(font, "game over", screen->w / 2 - 270, screen->h / 2);
+		draw_utf_word(font, "game over", screen->w / 2 - 270, screen->h / 2);
 	}
 
 	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
@@ -691,6 +693,29 @@ void draw_text() {
 	glColor3f(1.f, 1.f, 1.f);
 
 	//render_shape(testshape);
+
+	glPopAttrib();
+}
+
+static void draw_utf_word(font_t* font, const char* word, float x, float y)
+{
+	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
+	//glViewport(0, 0, screen->w, screen->h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, screen->w, 0, screen->h, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_FOG);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
+
+	glTranslatef(x, y, 0.f);
+	glScalef(100.f, 100.f, 100.f);
+
+	draw_hollow_word(font, word);
 
 	glPopAttrib();
 }
@@ -962,7 +987,7 @@ void load_resources()
 	fp = fopen("test.shape", "r");
 	if (fp != NULL)
 		testshape = load_shape(fp);*/
-	font = load_font("Pusselbit.ttf", 100.f, 3);
+	font = load_font("Pusselbit.ttf", 3);
 	score = new_bigint(0);
 	bonus = new_bigint(1);
 	diff = new_bigint(0);

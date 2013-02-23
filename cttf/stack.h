@@ -17,29 +17,20 @@
  * along with cTTF; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#ifndef CTTF_SHAPE_H
-#define CTTF_SHAPE_H
+#ifndef CTTF_STACK_H
+#define CTTF_STACK_H
 
-#include <stdio.h>
-#include "vector.h"
+typedef struct stack	stack_t;
 
-typedef struct shape	shape_t;
-
-shape_t* new_shape();
-void free_shape(shape_t** shape);
-void shape_add_vec(shape_t* shape, float x, float y);
-void shape_add_seg(shape_t* shape, int n, int m);
-shape_t* load_shape(FILE* file);
-void write_shape(FILE* file, shape_t* shape);
-
-struct shape {
-	vector_t*	vec;
-	int		nvec;
-	int		maxvec;
-	int*		seg;
-	int		nseg;
-	int		maxseg;
+struct stack {
+	void*		data;
+	stack_t*	next;
 };
+
+void stack_push(stack_t** stack, void* data);
+void* stack_pop(stack_t** stack);
+void* stack_peek(stack_t* stack);
+void free_stack(stack_t** stack);
 
 #endif
 

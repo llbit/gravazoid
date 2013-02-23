@@ -1,47 +1,33 @@
 CC=gcc
 LD=gcc
 CFLAGS=-Wall -std=c99 -g -pg
-LDFLAGS=-lSDL -lGLU -lGL -g -pg
+LDFLAGS=-Lcttf -lcttf -lSDL -lGLU -lGL -g -pg
 
-all:	game vex
+.PHONY:	cttf
 
-game:	main.o render.o shape.o cttf.o text.o bigint.o list.o sfx.o
-	${LD} -o $@ $^ ${LDFLAGS}
+all:	cttf game
 
-vex:	vex.o shape.o render.o
+cttf:
+	$(MAKE) -C cttf
+
+game:	main.o render.o bigint.o sfx.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
 clean:
+	$(MAKE) -C cttf clean
 	rm main.o
-	rm shape.o
-	rm cttf.o
-	rm text.o
 	rm sfx.o
-	rm vex
+	rm bigint.o
+	rm render.o
 	rm game
 
-main.o:	main.c ark.h list.h bigint.h text.h render.h sfx.h cttf/shape.h
-	${CC} ${CFLAGS} -c $< -o $@
-
-vex.o: vex.c
-	${CC} ${CFLAGS} -c $< -o $@
-
-list.o: list.c list.h
+main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 bigint.o: bigint.c bigint.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 render.o: render.c render.h
-	${CC} ${CFLAGS} -c $< -o $@
-
-text.o: text.c text.h
-	${CC} ${CFLAGS} -c $< -o $@
-
-cttf.o: cttf/cttf.c
-	${CC} ${CFLAGS} -c $< -o $@
-
-shape.o: cttf/shape.c
 	${CC} ${CFLAGS} -c $< -o $@
 
 sfx.o:	sfx.c sfx.h music_level.h drums.h

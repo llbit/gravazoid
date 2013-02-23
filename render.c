@@ -3,23 +3,6 @@
 #include "ark.h"
 #include "render.h"
 
-void render_shape(shape_t* shape)
-{
-	glBegin(GL_LINES);
-
-	for (int i = 0; i < shape->nseg; ++i) {
-		int	n;
-		int	m;
-
-		n = shape->seg[i*2];
-		m = shape->seg[i*2+1];
-		glVertex3f(shape->vec[n].x, shape->vec[n].y, 0.f);
-		glVertex3f(shape->vec[m].x, shape->vec[m].y, 0.f);
-	}
-
-	glEnd();
-}
-
 void render_brick(int coords[4][2], int y)
 {
 	//glNormal3d(0, 1, 0);
