@@ -999,7 +999,7 @@ void load_resources()
 	diff = new_bigint(0);
 }
 
-int main(int argc, const char** argv) {
+int main(int argc, char* argv[]) {
 	int	time = 0;
 	int	frames = 0;
 	bool	fullscreen = true;
