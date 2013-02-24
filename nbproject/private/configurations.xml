@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="88">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="." name="arkanoid">
+      <df name="cttf">
+        <df name="test">
+        </df>
+        <in>3dtest.c</in>
+        <in>bstree.c</in>
+        <in>bstree.h</in>
+        <in>cttftext.c</in>
+        <in>ftest.c</in>
+        <in>list.c</in>
+        <in>list.h</in>
+        <in>mesh.h</in>
+        <in>otfdbg.c</in>
+        <in>qsortv.c</in>
+        <in>qsortv.h</in>
+        <in>render.c</in>
+        <in>shape.c</in>
+        <in>shape.h</in>
+        <in>stack.c</in>
+        <in>stack.h</in>
+        <in>text.h</in>
+        <in>treeset.c</in>
+        <in>treeset.h</in>
+        <in>triangulate.c</in>
+        <in>triangulate.h</in>
+        <in>ttf.c</in>
+        <in>ttf.h</in>
+        <in>typeset.c</in>
+        <in>typeset.h</in>
+        <in>vector.h</in>
+        <in>vex.c</in>
+      </df>
+      <in>ark.h</in>
+      <in>bigint.c</in>
+      <in>bigint.h</in>
+      <in>drums.h</in>
+      <in>main.c</in>
+      <in>music_level.h</in>
+      <in>render.c</in>
+      <in>render.h</in>
+      <in>sfx.c</in>
+      <in>sfx.h</in>
+      <in>triangulate.c</in>
+      <in>triangulate.h</in>
+    </df>
+  </logicalFolder>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <platform>3</platform>
+      </toolsSet>
+      <dbx_gdbdebugger version="1">
+        <gdb_pathmaps>
+        </gdb_pathmaps>
+        <gdb_interceptlist>
+          <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
+        </gdb_interceptlist>
+        <gdb_options>
+          <DebugOptions>
+          </DebugOptions>
+        </gdb_options>
+        <gdb_buildfirst gdb_buildfirst_overriden="false" gdb_buildfirst_old="false"/>
+      </dbx_gdbdebugger>
+      <nativedebugger version="1">
+        <engine>gdb</engine>
+      </nativedebugger>
+      <runprofile version="9">
+        <runcommandpicklist>
+          <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
+        </runcommandpicklist>
+        <runcommand>"${OUTPUT_PATH}"</runcommand>
+        <rundir>.</rundir>
+        <buildfirst>true</buildfirst>
+        <terminal-type>0</terminal-type>
+        <remove-instrumentation>0</remove-instrumentation>
+        <environment>
+        </environment>
+      </runprofile>
+    </conf>
+  </confs>
+</configurationDescriptor>

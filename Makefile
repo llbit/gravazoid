@@ -1,6 +1,6 @@
 CC=gcc
 LD=gcc
-CFLAGS=-Wall -std=c99 -g -pg
+CFLAGS=-Wall -std=c99 -g
 
 ifdef __MINGW32__
 	LDFLAGS=-Lcttf -lcttf -lmingw32 -lSDLmain -lSDL -mwindows \

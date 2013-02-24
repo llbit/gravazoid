@@ -1,7 +1,7 @@
-game
+/game.exe
+/game
 .*.swp
 .*\.swo
 *.o
-Session.vim
-gmon.out
-vex
+/Session.vim
+/gmon.out

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="88">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <df root="." name="arkanoid">
+      <df name="cttf">
+        <in>bstree.h</in>
+        <in>ftest.c</in>
+        <in>list.h</in>
+        <in>qsortv.h</in>
+        <in>shape.h</in>
+        <in>triangulate.h</in>
+        <in>ttf.h</in>
+        <in>vector.h</in>
+      </df>
+    </df>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>default</compilerSet>
+      </toolsSet>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f Makefile __MINGW32__=true</buildCommand>
+          <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
+          <executablePath></executablePath>
+          <cTool>
+            <incDir>
+              <pElem>cttf</pElem>
+            </incDir>
+          </cTool>
+        </makeTool>
+      </makefileType>
+      <item path="cttf/bstree.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cttf/ftest.c" ex="false" tool="0" flavor2="2">
+        <cTool>
+        </cTool>
+      </item>
+      <item path="cttf/list.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cttf/qsortv.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cttf/shape.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cttf/triangulate.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cttf/ttf.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cttf/vector.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

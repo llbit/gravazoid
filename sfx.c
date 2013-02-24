@@ -24,6 +24,10 @@ typedef uint32_t u32;
 
 #include "drums.h"
 
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
+
 enum {
 	CHP_FREQDUP = 0x1,
 	CHP_FREQDDN = 0x2,
