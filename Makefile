@@ -3,7 +3,8 @@ LD=gcc
 CFLAGS=-Wall -std=c99 -g -pg
 
 ifdef __MINGW32__
-	LDFLAGS=-Lcttf -lcttf -lmingw32 -lSDLmain -lSDL -mwindows -lGLU -lGL -g
+	LDFLAGS=-Lcttf -lcttf -lmingw32 -lSDLmain -lSDL -mwindows \
+			-lglu32 -lopengl32 -g
 else
 	LDFLAGS=-Lcttf -lcttf -lSDL -lGLU -lGL -g
 endif
