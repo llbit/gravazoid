@@ -8,13 +8,12 @@ else
 	LDFLAGS=-Lcttf -lcttf -lSDL -lGLU -lGL -g
 endif
 
-
 .PHONY:	cttf
 
 all:	cttf game
 
 cttf:
-	$(MAKE) -C cttf
+	$(MAKE) -C cttf libcttf.a vex
 
 game:	main.o render.o bigint.o sfx.o
 	${LD} -o $@ $^ ${LDFLAGS}
