@@ -1,7 +1,13 @@
 CC=gcc
 LD=gcc
 CFLAGS=-Wall -std=c99 -g -pg
-LDFLAGS=-Lcttf -lcttf -lSDL -lGLU -lGL -g -pg
+
+ifdef __MINGW32__
+	LDFLAGS=-Lcttf -lcttf -lmingw32 -lSDLmain -lSDL -mwindows -lGLU -lGL -g
+else
+	LDFLAGS=-Lcttf -lcttf -lSDL -lGLU -lGL -g
+endif
+
 
 .PHONY:	cttf
 
