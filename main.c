@@ -19,7 +19,7 @@
 
 static void errx(int exitval, const char* msg)
 {
-	fprintf(stderr, msg);
+	fprintf(stderr, "%s", msg);
 	exit(exitval);
 }
 
@@ -294,7 +294,7 @@ void draw_ball(double bx, double by, int segments) {
 	glPopMatrix();
 }
 
-void drawmembrane() {
+void draw_membrane() {
 	int x, y;
 
 	glBindTexture(GL_TEXTURE_2D, TEX_GRID);
@@ -469,7 +469,7 @@ void drawscene(int with_membrane) {
 	glFogf(GL_FOG_START, 200);
 	glFogf(GL_FOG_END, 600);
 
-	if(with_membrane) drawmembrane();
+	if(with_membrane) draw_membrane();
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
