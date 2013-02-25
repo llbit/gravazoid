@@ -1,10 +1,10 @@
 #ifndef ARK_ARK_H
 #define ARK_ARK_H
 
-/* Height of playing field */
+/* Height of playing field (z axis) */
 #define WORLDH 240
 
-/* Width of playing field */
+/* Width of playing field (x axis) */
 #define WORLDW 240
 
 /* Border width (beyond playing field) */
@@ -33,7 +33,7 @@
 #define BALLSPEED 2.1
 #define GRAVITY 0.009
 
-#define MEMBRANESTEP 7
+#define MEMBRANESTEP 5
 #define NBLUR 96
 
 #define MAX_PADDLE_VEL 1000

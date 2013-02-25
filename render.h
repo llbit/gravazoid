@@ -20,6 +20,7 @@ struct worldpixel {
 extern struct worldpixel worldmap[WORLDH][WORLDW];
 
 void render_brick(int coords[4][2], int y);
+void draw_membrane_part(int x0, int x1, int z0, int z1);
 void draw_membrane();
 
 #endif

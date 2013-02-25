@@ -22,9 +22,26 @@ void render_brick(int coords[4][2], int y)
 	}
 }
 
+void draw_membrane_part(int x0, int x1, int z0, int z1)
+{
+	glTexCoord2d(x0 * GRIDSCALE, z0 * GRIDSCALE);
+	glVertex3d(x0, 0, z0);
+
+	glTexCoord2d(x0 * GRIDSCALE, z1 * GRIDSCALE);
+	glVertex3d(x0, 0, z1);
+
+	glTexCoord2d(x1 * GRIDSCALE, z1 * GRIDSCALE);
+	glVertex3d(x1, 0, z1);
+
+	glTexCoord2d(x1 * GRIDSCALE, z0 * GRIDSCALE);
+	glVertex3d(x1, 0, z0);
+
+}
+
 void draw_membrane()
 {
 	int x, y;
+	int ox, oz;
 
 	glBindTexture(GL_TEXTURE_2D, TEX_GRID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -33,64 +50,50 @@ void draw_membrane()
 	glDepthMask(GL_TRUE);
 	glDisable(GL_CULL_FACE);
 	glColor3ub(0x62, 0xBC, 0xE8);
-	
+
 	glBegin(GL_QUADS);
 
-	glTexCoord2d(-BORDER * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(-BORDER - WORLDW / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(0, -BORDER * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(0, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, +BORDER + WORLDH / 2);
-	glTexCoord2d(-BORDER * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(-BORDER - WORLDW / 2, 0, +BORDER + WORLDH / 2);
+	ox = -WORLDW / 2;
+	oz = -WORLDH / 2;
+	draw_membrane_part(ox, ox + WORLDW, oz, oz - BORDER);
 
-	glTexCoord2d(WORLDW * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(+BORDER + WORLDW / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(+(WORLDW + BORDER) * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(+(WORLDW + BORDER) * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, +BORDER + WORLDH / 2);
-	glTexCoord2d(WORLDW * GRIDSCALE, +(BORDER + WORLDH) * GRIDSCALE);
-	glVertex3d(+BORDER + WORLDW / 2, 0, +BORDER + WORLDH / 2);
+	ox = -WORLDW / 2;
+	oz = WORLDH / 2;
+	draw_membrane_part(ox, ox + WORLDW, oz, oz + BORDER);
 
-	glTexCoord2d(0, -BORDER * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(+WORLDW * GRIDSCALE, -BORDER * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, -BORDER - WORLDH / 2);
-	glTexCoord2d(+WORLDW * GRIDSCALE, 0);
-	glVertex3d(+(WORLDW - 1) / 2, 0, -WORLDH / 2);
-	glTexCoord2d(0, 0);
-	glVertex3d(-WORLDW / 2, 0, -WORLDH / 2);
+	ox = -BORDER - WORLDW / 2;
+	oz = -BORDER - WORLDH / 2;
+	draw_membrane_part(ox, ox + BORDER, oz, oz + 2*BORDER + WORLDH);
 
-	glTexCoord2d(0, +(WORLDH + BORDER) * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, +BORDER + WORLDH / 2);
-	glTexCoord2d(+WORLDW * GRIDSCALE, +(WORLDH + BORDER) * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, +BORDER + WORLDH / 2);
-	glTexCoord2d(+WORLDW * GRIDSCALE, +WORLDH * GRIDSCALE);
-	glVertex3d(+(WORLDW - 1) / 2, 0, +(WORLDH - 1) / 2);
-	glTexCoord2d(0, +WORLDH * GRIDSCALE);
-	glVertex3d(-WORLDW / 2, 0, +(WORLDH - 1) / 2);
+	ox =  BORDER + WORLDW / 2;
+	oz = -BORDER - WORLDH / 2;
+	draw_membrane_part(ox, ox - BORDER, oz, oz + 2*BORDER + WORLDH);
 
 	glEnd();
 
 	glEnable(GL_CULL_FACE);
 	for(y = 0; y < WORLDH; y += MEMBRANESTEP) {
+		int z0 = y - WORLDH/2;
+		int z1 = y + MEMBRANESTEP - WORLDH/2;
+		int xmax = WORLDW/2;
+
 		glBegin(GL_QUAD_STRIP);
 		for(x = 0; x < WORLDW; x += MEMBRANESTEP) {
-			glTexCoord2d(x * GRIDSCALE, y * GRIDSCALE);
-			glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y][x].sinkage, y - WORLDH / 2);
-			glTexCoord2d(x * GRIDSCALE, (y + MEMBRANESTEP) * GRIDSCALE);
+			int x0 = x - WORLDW/2;
+
+			glTexCoord2d(x0 * GRIDSCALE, z0 * GRIDSCALE);
+			glVertex3d(x0, -SINKHEIGHT * worldmap[y][x].sinkage, z0);
+			glTexCoord2d(x0 * GRIDSCALE, z1 * GRIDSCALE);
 			if(y + MEMBRANESTEP >= WORLDH) {
-				glVertex3d(x - WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
+				glVertex3d(x0, 0, z1);
 			} else {
-				glVertex3d(x - WORLDW / 2, -SINKHEIGHT * worldmap[y + MEMBRANESTEP][x].sinkage, y + MEMBRANESTEP - WORLDH / 2);
+				glVertex3d(x0, -SINKHEIGHT * worldmap[y + MEMBRANESTEP][x].sinkage, z1);
 			}
 		}
-		glTexCoord2d(WORLDW * GRIDSCALE, y * GRIDSCALE);
-		glVertex3d(WORLDW / 2, 0, y - WORLDH / 2);
-		glTexCoord2d(WORLDW * GRIDSCALE, (y + MEMBRANESTEP) * GRIDSCALE);
-		glVertex3d(WORLDW / 2, 0, y + MEMBRANESTEP - WORLDH / 2);
+		glTexCoord2d(xmax * GRIDSCALE, z0 * GRIDSCALE);
+		glVertex3d(xmax, 0, z0);
+		glTexCoord2d(xmax * GRIDSCALE, z1 * GRIDSCALE);
+		glVertex3d(xmax, 0, z1);
 		glEnd();
 	}
 
