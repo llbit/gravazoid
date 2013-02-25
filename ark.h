@@ -35,6 +35,5 @@
 #define MAXBRICK 256
 #define MAXBALL 16
 
-
 #endif
 
