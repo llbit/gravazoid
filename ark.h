@@ -1,10 +1,16 @@
 #ifndef ARK_ARK_H
 #define ARK_ARK_H
 
+/* Height of playing field */
 #define WORLDH 240
+
+/* Width of playing field */
 #define WORLDW 240
 
+/* Border width (beyond playing field) */
 #define BORDER (200)
+
+/* Vignette border */
 #define VIGNETTE_BRDR (200)
 
 #define SHARDW (1)
