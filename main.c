@@ -23,8 +23,6 @@ static void errx(int exitval, const char* msg)
 	exit(exitval);
 }
 
-//static shape_t* testshape = NULL;
-
 static int colors[][3] = {
 	{0x65, 0x9D, 0xFD}, // light blue
 	{0x63, 0x7E, 0x9A}, // dark blue
@@ -701,8 +699,6 @@ static void draw_text()
 	glDisable(GL_BLEND);
 	glColor3f(1.f, 1.f, 1.f);
 
-	//render_shape(testshape);
-
 	glPopAttrib();
 }
 
@@ -998,10 +994,6 @@ void physics() {
 
 void load_resources()
 {
-	/*FILE*	fp;
-	fp = fopen("test.shape", "r");
-	if (fp != NULL)
-		testshape = load_shape(fp);*/
 	font = load_font("Pusselbit.ttf", 3);
 	score = new_bigint(0);
 	bonus = new_bigint(1);
