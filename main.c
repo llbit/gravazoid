@@ -35,7 +35,7 @@ static int colors[][3] = {
 
 static int ball_color[3] = { 0x33, 0x8C, 0x5C };
 
-static void draw_text();
+static void draw_hud();
 static void draw_utf_word(font_t* font, const char* word, float x, float y);
 
 static int running = 1;
@@ -540,10 +540,10 @@ void drawframe() {
 		glDisable(GL_TEXTURE_RECTANGLE_ARB);
 	}
 
-	draw_text();
+	draw_hud();
 }
 
-static void draw_text()
+static void draw_hud()
 {
 	char ibuf[64];
 	char buf[64];
