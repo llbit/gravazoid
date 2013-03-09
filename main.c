@@ -548,12 +548,30 @@ static void draw_text()
 	char ibuf[64];
 	char buf[64];
 	int i;
+	float text_height;
+	float offset = 0.2f;
+
+	text_height = line_height(font);
+
+	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
+	//glViewport(0, 0, screen->w, screen->h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, 20, 0, 20, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glScalef(1, 1, 1);
+	glLoadIdentity();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_FOG);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_BLEND);
 
 	// score:
 	bigint_to_str(score, ibuf, sizeof ibuf);
 	snprintf(buf, sizeof buf, "Score: %s", ibuf);
 	glColor3f(1.f, 1.f, 1.f);
-	draw_utf_word(font, buf, 2.f, 4.f);
+	draw_utf_word(font, buf, offset, offset);
 
 	// score_up:
 	if (score_up > 0) {
@@ -561,57 +579,34 @@ static void draw_text()
 		bigint_to_str(diff, buf+1, sizeof buf - 1);
 		float v = logf(score_up) / logf(1000);
 		glColor3f(v, v, v);
-		draw_utf_word(font, buf, 2.f, 4.f + 150.f*v);
+		draw_utf_word(font, buf, offset, text_height + 1.f*v);
 	}
 
+#ifdef DRAW_FPS
 	snprintf(buf, sizeof(buf), "%3d fps", fps);
 	glColor3f(1.f, 1.f, 1.f);
-	draw_utf_word(font, buf, 2.f, screen->h - 100);
-	for(i = 0; i < lives; i++) {
-		draw_utf_word(font, "*", screen->w - 300 + 60 * i, screen->h - 100);
+	draw_utf_word(font, buf, offset, 20 - offset - text_height);
+#endif
+	for (i = 0; i < lives; i++) {
+		draw_utf_word(font, "*", 20 - offset - (i+1) * line_width(font, "*"), 20 - offset - text_height);
 	}
 
 	if(gameover) {
-		draw_utf_word(font, "game over", screen->w / 2 - 270, screen->h / 2);
+		float width = line_width(font, "game over");
+		draw_utf_word(font, "game over", 10-width/2, 10);
 	}
-
-	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, 1, 0, 1, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_FOG);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
-	glColor3f(1.f, 1.f, 1.f);
 
 	glPopAttrib();
 }
 
 static void draw_utf_word(font_t* font, const char* word, float x, float y)
 {
-	glPushAttrib(GL_VIEWPORT_BIT | GL_TRANSFORM_BIT);
-	//glViewport(0, 0, screen->w, screen->h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, screen->w, 0, screen->h, -1, 1);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_FOG);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_BLEND);
-
+	glPushMatrix();
 	glTranslatef(x, y, 0.f);
-	glScalef(100.f, 100.f, 100.f);
 
 	draw_filled_word(font, word);
 
-	glPopAttrib();
+	glPopMatrix();
 }
 
 void handle_key(SDLKey key, int down) {
