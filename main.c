@@ -449,6 +449,8 @@ void drawframe() {
 	uint8_t heightmap[WORLDH][WORLDW];
 	uint8_t *overlay = alloca((screen->w/2) * (screen->h/2) * 3);
 
+	glNormal3d(0, 1, 0);
+
 	if(!worldmap_valid) {
 		glViewport(0, 0, WORLDW, WORLDH);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -607,7 +609,7 @@ static void draw_utf_word(font_t* font, const char* word, float x, float y)
 	glTranslatef(x, y, 0.f);
 	glScalef(100.f, 100.f, 100.f);
 
-	draw_hollow_word(font, word);
+	draw_filled_word(font, word);
 
 	glPopAttrib();
 }
