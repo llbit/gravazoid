@@ -560,7 +560,8 @@ static void draw_hud()
 		bigint_to_str(diff, buf+1, sizeof buf - 1);
 		float v = logf(score_up) / logf(1000);
 		glColor3f(v, v, v);
-		draw_utf_word(font, buf, offset, text_height + 1.f*v);
+		draw_utf_word(font, buf, offset + line_width(font, "Score:"),
+				0.6f * text_height + 1.f*v);
 	}
 
 #ifdef DRAW_FPS
@@ -569,7 +570,8 @@ static void draw_hud()
 	draw_utf_word(font, buf, offset, 20 - offset - text_height);
 #endif
 	for (i = 0; i < lives; i++) {
-		draw_utf_word(font, "*", 20 - offset - (i+1) * line_width(font, "*"), 20 - offset - text_height);
+		draw_utf_word(font, "*", 20 - offset - (i+1) * line_width(font, "*"),
+				20 - offset - text_height);
 	}
 
 	if(gameover) {
