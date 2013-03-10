@@ -4,7 +4,8 @@
 #include "ark.h"
 #include "block.h"
 
-#define DEPTH 15.f
+#define DEPTH (15.f)
+#define BLOCKSIZE (25.f)
 
 block_t* load_block(const char* filename)
 {
@@ -46,8 +47,8 @@ void draw_block(block_t* block, int x, int y, int z)
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
-	glTranslatef(x-WORLDW/2, HEIGHTSCALE - SINKHEIGHTTOP * y, z-WORLDH/2);
-	glScalef(20, 20, 20);
+	glTranslatef(x-WORLDW/2-BLOCKSIZE/2, HEIGHTSCALE - SINKHEIGHTTOP * y, z-WORLDH/2-BLOCKSIZE/2);
+	glScalef(BLOCKSIZE, BLOCKSIZE, BLOCKSIZE);
 
 	glBegin(GL_TRIANGLES);
 	p = h = edgelist->faces;
