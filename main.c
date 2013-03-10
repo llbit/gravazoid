@@ -355,6 +355,7 @@ void drawscene(int with_membrane) {
 	glFogf(GL_FOG_END, 600);
 
 	if(with_membrane) draw_membrane();
+
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -367,33 +368,15 @@ void drawscene(int with_membrane) {
 	for(i = 0; i < nbrick; i++) {
 		struct brick *b = &brick[i];
 		if(b->flags & BRICKF_LIVE) {
-			int coords[4][2];
-
 			light[0] = colors[b->color][0] / 255.;
 			light[1] = colors[b->color][1] / 255.;
 			light[2] = colors[b->color][2] / 255.;
 			light[3] = 1;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
-			/*light[0] = .5;
-			light[1] = .5;
-			light[2] = .5;
-			light[3] = 1;
-			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, light);
-			glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 40);*/
 
 			int y = get_brick_y(b);
-			coords[0][0] = b->x - 8 - WORLDW / 2;
-			coords[0][1] = b->y - 8 - WORLDH / 2;
-			coords[1][0] = b->x - 8 - WORLDW / 2;
-			coords[1][1] = b->y + 7 - WORLDH / 2;
-			coords[2][0] = b->x + 7 - WORLDW / 2;
-			coords[2][1] = b->y + 7 - WORLDH / 2;
-			coords[3][0] = b->x + 7 - WORLDW / 2;
-			coords[3][1] = b->y - 8 - WORLDH / 2;
 
-			glBegin(GL_QUADS);
-			render_brick(coords, y);
-			glEnd();
+			draw_brick(b->x, y, b->y);
 
 			// draw wirebox
 			glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
@@ -401,9 +384,7 @@ void drawscene(int with_membrane) {
 			glDisable(GL_LIGHTING);
 			glDisable(GL_FOG);
 			glColor3f(0, 0, 0);
-			glBegin(GL_QUADS);
-			render_brick(coords, y);
-			glEnd();
+			draw_brick(b->x, y, b->y);
 			glPopAttrib();
 		}
 	}

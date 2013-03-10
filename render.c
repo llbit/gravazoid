@@ -5,8 +5,19 @@
 
 struct worldpixel worldmap[WORLDH][WORLDW];
 
-void render_brick(int coords[4][2], int y)
+void draw_brick(int x, int y, int z)
 {
+	int coords[4][2];
+	coords[0][0] = x - 8 - WORLDW / 2;
+	coords[0][1] = z - 8 - WORLDH / 2;
+	coords[1][0] = x - 8 - WORLDW / 2;
+	coords[1][1] = z + 7 - WORLDH / 2;
+	coords[2][0] = x + 7 - WORLDW / 2;
+	coords[2][1] = z + 7 - WORLDH / 2;
+	coords[3][0] = x + 7 - WORLDW / 2;
+	coords[3][1] = z - 8 - WORLDH / 2;
+
+	glBegin(GL_QUADS);
 	//glNormal3d(0, 1, 0);
 	glVertex3d(coords[0][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[0][1]);
 	glVertex3d(coords[1][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[1][1]);
@@ -20,6 +31,7 @@ void render_brick(int coords[4][2], int y)
 		glVertex3d(coords[k][0], -100, coords[k][1]);
 		glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[k][1]);
 	}
+	glEnd();
 }
 
 void draw_membrane_part(int x0, int x1, int z0, int z1)
