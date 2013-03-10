@@ -9,7 +9,7 @@
 #include "render.h"
 #include "cttf/text.h"
 #include "bigint.h"
-#include "cttf/shape.h"
+#include "block.h"
 #include "cttf/list.h"
 #include "sfx.h"
 
@@ -101,6 +101,8 @@ struct ball {
 } ball[MAXBALL];
 int nball;
 
+static block_t* block;
+
 static void handle_event(SDL_Event* event);
 static void on_motion(SDL_MouseMotionEvent* motion);
 static void on_button(SDL_MouseButtonEvent* button);
@@ -133,8 +135,8 @@ void videosetup(bool fullscreen) {
 	if(!list) {
 		errx(1, "No usable video modes found");
 	} else if(list == (SDL_Rect **) -1) {
-		w = 640;
-		h = 400;
+		w = 800;
+		h = 600;
 	} else {
 		w = list[0]->w;
 		h = list[0]->h;
@@ -376,16 +378,7 @@ void drawscene(int with_membrane) {
 
 			int y = get_brick_y(b);
 
-			draw_brick(b->x, y, b->y);
-
-			// draw wirebox
-			glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glDisable(GL_LIGHTING);
-			glDisable(GL_FOG);
-			glColor3f(0, 0, 0);
-			draw_brick(b->x, y, b->y);
-			glPopAttrib();
+			draw_block(block, b->x, y, b->y);
 		}
 	}
 
@@ -862,6 +855,7 @@ void physics() {
 void load_resources()
 {
 	font = load_font("Pusselbit.ttf", 3);
+	block = load_block("blocks/block0.shape");
 	score = new_bigint(0);
 	bonus = new_bigint(1);
 	diff = new_bigint(0);

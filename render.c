@@ -5,35 +5,6 @@
 
 struct worldpixel worldmap[WORLDH][WORLDW];
 
-void draw_brick(int x, int y, int z)
-{
-	int coords[4][2];
-	coords[0][0] = x - 8 - WORLDW / 2;
-	coords[0][1] = z - 8 - WORLDH / 2;
-	coords[1][0] = x - 8 - WORLDW / 2;
-	coords[1][1] = z + 7 - WORLDH / 2;
-	coords[2][0] = x + 7 - WORLDW / 2;
-	coords[2][1] = z + 7 - WORLDH / 2;
-	coords[3][0] = x + 7 - WORLDW / 2;
-	coords[3][1] = z - 8 - WORLDH / 2;
-
-	glBegin(GL_QUADS);
-	//glNormal3d(0, 1, 0);
-	glVertex3d(coords[0][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[0][1]);
-	glVertex3d(coords[1][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[1][1]);
-	glVertex3d(coords[2][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[2][1]);
-	glVertex3d(coords[3][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[3][1]);
-	for(int j = 0; j < 4; j++) {
-		int k = (j + 1) % 4;
-		//glNormal3d(coords[k][2] - coords[j][2], 0, coords[k][0] - coords[j][0]);
-		glVertex3d(coords[j][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[j][1]);
-		glVertex3d(coords[j][0], -100, coords[j][1]);
-		glVertex3d(coords[k][0], -100, coords[k][1]);
-		glVertex3d(coords[k][0], HEIGHTSCALE - SINKHEIGHTTOP * y, coords[k][1]);
-	}
-	glEnd();
-}
-
 void draw_membrane_part(int x0, int x1, int z0, int z1)
 {
 	glTexCoord2d(x0 * GRIDSCALE, z0 * GRIDSCALE);

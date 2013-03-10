@@ -41,5 +41,8 @@
 #define MAXBRICK 256
 #define MAXBALL 16
 
+/* Draw the FPS counter */
+#define DRAW_FPS
+
 #endif
 

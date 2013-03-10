@@ -16,7 +16,7 @@ all:	cttf game
 cttf:
 	$(MAKE) -C cttf libcttf.a vex
 
-game:	main.o render.o bigint.o sfx.o
+game:	main.o render.o bigint.o sfx.o block.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
 clean:
@@ -27,13 +27,16 @@ clean:
 	rm render.o
 	rm game
 
-main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h
+main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h block.h
+	${CC} ${CFLAGS} -c $< -o $@
+
+block.o: block.c block.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 bigint.o: bigint.c bigint.h
 	${CC} ${CFLAGS} -c $< -o $@
 
-render.o: render.c render.h
+render.o: render.c render.h block.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 sfx.o:	sfx.c sfx.h music_level.h drums.h
