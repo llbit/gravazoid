@@ -5,3 +5,5 @@
 *.o
 /Session.vim
 /gmon.out
+/lvledit
+/lvledit.exe
