@@ -2,6 +2,8 @@
 <configurationDescriptor version="88">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="arkanoid">
+      <df name="blocks">
+      </df>
       <df name="cttf">
         <df name="test">
         </df>
@@ -36,6 +38,8 @@
       <in>ark.h</in>
       <in>bigint.c</in>
       <in>bigint.h</in>
+      <in>block.c</in>
+      <in>block.h</in>
       <in>drums.h</in>
       <in>main.c</in>
       <in>music_level.h</in>
