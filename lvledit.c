@@ -193,11 +193,11 @@ void render()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glColor3f(1, 1, 1);
-
 	p = blocks;
 	if (p) do {
 		block_t*	block = p->data;
+
+		glColor3f(1, 1, 1);
 
 		draw_block(block);
 
