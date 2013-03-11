@@ -8,12 +8,19 @@
 
 block_t* load_block(const char* filename)
 {
-	block_t*	block = malloc(sizeof(block_t));
-	block->shape = load_shape(fopen(filename, "rb"));
-	if (block->shape) {
-		block->edgelist = triangulate(block->shape);
+	FILE*		file = fopen(filename, "rb");
+
+	if (file) {
+		block_t*	block = malloc(sizeof(block_t));
+		block->shape = load_shape(file);
+		fclose(file);
+		if (block->shape) {
+			block->edgelist = triangulate(block->shape);
+		}
+		return block;
+	} else {
+		return NULL;
 	}
-	return block;
 }
 
 static void draw_sides(block_t* block)
@@ -38,7 +45,7 @@ static void draw_sides(block_t* block)
 	glEnd();
 }
 
-void draw_block(block_t* block, int x, int y, int z)
+void draw_block(block_t* block)
 {
 	list_t*		p;
 	list_t*		h;
@@ -46,7 +53,9 @@ void draw_block(block_t* block, int x, int y, int z)
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
-	glTranslatef(x-WORLDW/2, HEIGHTSCALE - SINKHEIGHTTOP * y, z-WORLDH/2);
+	glTranslatef(block->x-WORLDW/2,
+			HEIGHTSCALE - SINKHEIGHTTOP * block->y,
+			block->z-WORLDH/2);
 	glScalef(20, 20, 20);
 
 	glBegin(GL_TRIANGLES);

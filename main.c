@@ -378,7 +378,10 @@ void drawscene(int with_membrane) {
 
 			int y = get_brick_y(b);
 
-			draw_block(block, b->x, y, b->y);
+			block->x = b->x;
+			block->y = y;
+			block->z = b->y;
+			draw_block(block);
 		}
 	}
 

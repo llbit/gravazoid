@@ -7,11 +7,14 @@
 typedef struct block block_t;
 
 struct block {
-	shape_t*		shape;
+	int		x;
+	int		y;
+	int		z;
+	shape_t*	shape;
 	edge_list_t*	edgelist;
 };
 
 block_t* load_block(const char* filename);
-void draw_block(block_t* block, int x, int y, int z);
+void draw_block(block_t* block);
 
 #endif
