@@ -252,14 +252,14 @@ block_t* add_block(float x, float y)
 	return block;
 }
 
-/* Add a new block
+/* Left click handler
  */
 void on_left_click(float x, float y)
 {
 	add_block(x, y);
 }
 
-/* Do nothing
+/* Right click handler
  */
 void on_right_click(float x, float y)
 {
