@@ -4,6 +4,8 @@
 #include "cttf/shape.h"
 #include "cttf/triangulate.h"
 
+#define NUM_BLOCK_TYPE (2)
+
 typedef struct block block_t;
 
 struct block {

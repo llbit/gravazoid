@@ -15,6 +15,7 @@ struct vec;
 struct seg;
 
 static list_t*	blocks;
+static block_t*	blocktype[NUM_BLOCK_TYPE];
 
 static int	shift = 0;
 static float	cx = -1;
@@ -39,14 +40,17 @@ static void on_right_click(float x, float y);
 static void delete_closest_block(float x, float y);
 static void print_help();
 static list_t* closest_block(float x, float y);
-static block_t* add_block(float x, float y);
+static block_t* add_block(int type, float x, float y);
 static float from_screen_x(int x);
 static float from_screen_y(int y);
+static void load_blocks();
 
 int main(int argc, char* argv[])
 {
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	atexit(SDL_Quit);
+
+	load_blocks();
 
 	for (int i = 1; i < argc; ++i) {
 		if (argv[i][0] == '-') {
@@ -126,6 +130,15 @@ void print_help()
 	printf("  OPTION may be one of\n");
 	printf("    -h         print help\n");
 	//printf("    -o TARGET  route output to TARGET\n");
+}
+
+void load_blocks()
+{
+	for (int i = 0; i < NUM_BLOCK_TYPE; ++i) {
+		char filename[128];
+		snprintf(filename, 128, "blocks/block%d.shape", i);
+		blocktype[i] = load_block(filename);
+	}
 }
 
 /* Parallel projection looking down on the x-y plane
@@ -242,9 +255,11 @@ void handle_event(SDL_Event* event)
 	}
 }
 
-block_t* add_block(float x, float y)
+block_t* add_block(int type, float x, float y)
 {
-	block_t*	block = load_block("blocks/block0.shape");
+	block_t*	block = malloc(sizeof(block_t));
+	block->edgelist = blocktype[type]->edgelist;
+	block->shape = blocktype[type]->shape;
 	block->x = x + WORLDW/2;
 	block->y = 200;
 	block->z = y + WORLDH/2;
@@ -256,7 +271,8 @@ block_t* add_block(float x, float y)
  */
 void on_left_click(float x, float y)
 {
-	add_block(x, y);
+	int type = 0;
+	add_block(type, x, y);
 }
 
 /* Right click handler
@@ -307,6 +323,12 @@ void delete_closest_block(float x, float y)
 void handle_key(SDLKey key, int down)
 {
 	switch(key) {
+	case SDLK_1:
+		if (down) add_block(0, cx, cy);
+		break;
+	case SDLK_2:
+		if (down) add_block(1, cx, cy);
+		break;
 	case SDLK_LSHIFT:
 		shift = down;
 		break;
