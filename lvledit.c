@@ -244,9 +244,7 @@ void handle_event(SDL_Event* event)
 
 block_t* add_block(float x, float y)
 {
-	printf("adding block (%.3f, %.3f)\n", x, y);
 	block_t*	block = load_block("blocks/block0.shape");
-	printf("block: %X\n", block);
 	block->x = x + WORLDW/2;//100 * x;
 	block->y = 200;
 	block->z = y + WORLDH/2;//100 * y;
