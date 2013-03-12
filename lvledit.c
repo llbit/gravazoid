@@ -11,6 +11,9 @@
 #include "cttf/list.h"
 #include "block.h"
 
+#define WINDOW_W (700)
+#define WINDOW_H (700)
+
 struct vec;
 struct seg;
 
@@ -27,9 +30,6 @@ static FILE*	out = NULL;
 
 SDL_Surface*	screen;
 static bool	running = true;
-
-#define WINDOW_W (700)
-#define WINDOW_H (700)
 
 static void setup_video();
 static void render();
