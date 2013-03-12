@@ -16,9 +16,9 @@ struct seg;
 
 static list_t*	blocks;
 
-static int		shift = 0;
-static float		cx = -1;
-static float		cy = -1;
+static int	shift = 0;
+static float	cx = -1;
+static float	cy = -1;
 
 // I/O streams
 static FILE*	in = NULL;
@@ -245,9 +245,9 @@ void handle_event(SDL_Event* event)
 block_t* add_block(float x, float y)
 {
 	block_t*	block = load_block("blocks/block0.shape");
-	block->x = x + WORLDW/2;//100 * x;
+	block->x = x + WORLDW/2;
 	block->y = 200;
-	block->z = y + WORLDH/2;//100 * y;
+	block->z = y + WORLDH/2;
 	list_add(&blocks, block);
 	return block;
 }
