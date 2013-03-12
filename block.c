@@ -56,7 +56,7 @@ void draw_block(block_t* block)
 	glTranslatef(block->x-WORLDW/2-BLOCKSIZE/2,
 			HEIGHTSCALE - SINKHEIGHTTOP * block->y,
 			block->z-WORLDH/2-BLOCKSIZE/2);
-	glScalef(20, 20, 20);
+	glScalef(BLOCKSIZE, BLOCKSIZE, BLOCKSIZE);
 
 	glBegin(GL_TRIANGLES);
 	p = h = edgelist->faces;
