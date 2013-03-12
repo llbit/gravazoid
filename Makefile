@@ -5,31 +5,35 @@ CFLAGS=-Wall -std=c99 -g
 ifdef __MINGW32__
 	LDFLAGS=-Lcttf -lcttf -lmingw32 -lSDLmain -lSDL -mwindows \
 			-lglu32 -lopengl32 -g
+	GAME=game.exe
+	LVLEDIT=lvledit.exe
 else
 	LDFLAGS=-Lcttf -lcttf -lSDL -lGLU -lGL -g
+	GAME=game
+	LVLEDIT=lvledit
 endif
 
 .PHONY:	cttf
 
-all:	cttf game lvledit
+all:	cttf ${GAME} ${LVLEDIT}
 
 cttf:
 	$(MAKE) -C cttf libcttf.a vex
 
-game:	main.o render.o bigint.o sfx.o block.o
+${GAME}:	main.o render.o bigint.o sfx.o block.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
-lvledit:	lvledit.o render.o sfx.o block.o
+${LVLEDIT}:	lvledit.o render.o sfx.o block.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
 clean:
 	$(MAKE) -C cttf clean
-	rm main.o
-	rm sfx.o
-	rm bigint.o
-	rm render.o
-	rm game
-	rm lvledit
+	rm -f main.o
+	rm -f sfx.o
+	rm -f bigint.o
+	rm -f render.o
+	rm -f ${GAME}
+	rm -f ${LVLEDIT}
 
 main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h block.h
 	${CC} ${CFLAGS} -c $< -o $@
