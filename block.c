@@ -5,7 +5,6 @@
 #include "block.h"
 
 #define DEPTH (15.f)
-#define BLOCKSIZE (25.f)
 
 block_t* load_block(const char* filename)
 {

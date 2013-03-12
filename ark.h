@@ -44,5 +44,7 @@
 /* Draw the FPS counter */
 #define DRAW_FPS
 
+#define BLOCKSIZE (25.f)
+
 #endif
 
