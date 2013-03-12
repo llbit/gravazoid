@@ -44,6 +44,7 @@ static block_t* add_block(int type, float x, float y);
 static float from_screen_x(int x);
 static float from_screen_y(int y);
 static void load_blocks();
+static void write_level(FILE* out);
 
 int main(int argc, char* argv[])
 {
@@ -96,30 +97,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	// write level
-	/*int	index = 0;
-	list_t*	p;
-	list_t*	h;
-	p = h = vecs;
-	if (p)
-	do {
-		struct vec*	vec = p->data;
-		p = p->succ;
-
-		vec->vindex = index++;
-		fprintf(out, "v: %f, %f\n", vec->x, vec->y);
-	} while (p != h);
-	p = h = segs;
-	if (p)
-	do {
-		struct seg*	seg = p->data;
-		p = p->succ;
-
-		fprintf(out, "s: %d, %d\n",
-				seg->origin->vindex,
-				seg->end->vindex);
-	} while (p != h);*/
-
+	write_level(out);
 	return 0;
 }
 
@@ -130,6 +108,22 @@ void print_help()
 	printf("  OPTION may be one of\n");
 	printf("    -h         print help\n");
 	//printf("    -o TARGET  route output to TARGET\n");
+}
+
+/* Write the level to file
+ */
+void write_level(FILE* out)
+{
+	list_t*	p;
+	list_t*	h;
+
+	p = h = blocks;
+	if (p) do {
+		block_t*	block = p->data;
+		p = p->succ;
+
+		fprintf(out, "%d, %d\n", block->x, block->z);
+	} while (p != h);
 }
 
 void load_blocks()
