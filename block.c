@@ -6,12 +6,32 @@
 
 #define DEPTH (15.f)
 
-block_t* load_block(const char* filename)
+blocktype_t*	blocktype[NUM_BLOCK_TYPE];
+
+void load_blocks()
+{
+	for (int i = 0; i < NUM_BLOCK_TYPE; ++i) {
+		char filename[128];
+		snprintf(filename, 128, "blocks/block%d.shape", i);
+		blocktype[i] = load_block(filename);
+	}
+}
+
+void free_blocks()
+{
+	for (int i = 0; i < NUM_BLOCK_TYPE; ++i) {
+		free_shape(&blocktype[i]->shape);
+		free_edgelist(&blocktype[i]->edgelist);
+		blocktype[i] = NULL;
+	}
+}
+
+blocktype_t* load_block(const char* filename)
 {
 	FILE*		file = fopen(filename, "rb");
 
 	if (file) {
-		block_t*	block = malloc(sizeof(block_t));
+		blocktype_t*	block = malloc(sizeof(blocktype_t));
 		block->shape = load_shape(file);
 		fclose(file);
 		if (block->shape) {
@@ -26,7 +46,7 @@ block_t* load_block(const char* filename)
 static void draw_sides(block_t* block)
 {
 	int		i;
-	shape_t*	shape = block->shape;
+	shape_t*	shape = blocktype[block->type]->shape;
 
 	glBegin(GL_QUADS);
 	for (i = 0; i < shape->nseg; ++i) {
@@ -49,7 +69,7 @@ void draw_block(block_t* block)
 {
 	list_t*		p;
 	list_t*		h;
-	edge_list_t*	edgelist = block->edgelist;
+	edge_list_t*	edgelist = blocktype[block->type]->edgelist;
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();

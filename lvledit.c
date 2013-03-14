@@ -18,7 +18,6 @@ struct vec;
 struct seg;
 
 static list_t*	blocks;
-static block_t*	blocktype[NUM_BLOCK_TYPE];
 
 static int	shift = 0;
 static float	cx = -1;
@@ -43,7 +42,6 @@ static list_t* closest_block(float x, float y);
 static block_t* add_block(int type, float x, float y);
 static float from_screen_x(int x);
 static float from_screen_y(int y);
-static void load_blocks();
 static void write_level(FILE* out);
 
 int main(int argc, char* argv[])
@@ -124,15 +122,6 @@ void write_level(FILE* out)
 
 		fprintf(out, "%d, %d\n", block->x, block->z);
 	} while (p != h);
-}
-
-void load_blocks()
-{
-	for (int i = 0; i < NUM_BLOCK_TYPE; ++i) {
-		char filename[128];
-		snprintf(filename, 128, "blocks/block%d.shape", i);
-		blocktype[i] = load_block(filename);
-	}
 }
 
 /* Parallel projection looking down on the x-y plane
@@ -252,11 +241,10 @@ void handle_event(SDL_Event* event)
 block_t* add_block(int type, float x, float y)
 {
 	block_t*	block = malloc(sizeof(block_t));
-	block->edgelist = blocktype[type]->edgelist;
-	block->shape = blocktype[type]->shape;
 	block->x = x + WORLDW/2;
 	block->y = 200;
 	block->z = y + WORLDH/2;
+	block->type = type;
 	list_add(&blocks, block);
 	return block;
 }

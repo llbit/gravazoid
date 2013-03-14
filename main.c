@@ -101,8 +101,6 @@ struct ball {
 } ball[MAXBALL];
 int nball;
 
-static block_t* block;
-
 static void handle_event(SDL_Event* event);
 static void on_motion(SDL_MouseMotionEvent* motion);
 static void on_button(SDL_MouseButtonEvent* button);
@@ -334,6 +332,7 @@ void draw_shards()
 void drawscene(int with_membrane) {
 	int i, j;
 	GLfloat light[4];
+	block_t	block;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -378,10 +377,11 @@ void drawscene(int with_membrane) {
 
 			int y = get_brick_y(b);
 
-			block->x = b->x;
-			block->y = y;
-			block->z = b->y;
-			draw_block(block);
+			block.x = b->x;
+			block.y = y;
+			block.z = b->y;
+			block.type = 0;
+			draw_block(&block);
 		}
 	}
 
@@ -858,7 +858,7 @@ void physics() {
 void load_resources()
 {
 	font = load_font("Pusselbit.ttf", 3);
-	block = load_block("blocks/block0.shape");
+	load_blocks(); /* load all block types */
 	score = new_bigint(0);
 	bonus = new_bigint(1);
 	diff = new_bigint(0);
@@ -924,6 +924,8 @@ int main(int argc, char* argv[]) {
 			handle_event(&event);
 		}
 	}
+
+	free_blocks();
 
 	return 0;
 }
