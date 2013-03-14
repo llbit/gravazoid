@@ -116,6 +116,7 @@ void write_level(FILE* out)
 	list_t*	p;
 	list_t*	h;
 
+	fprintf(out, "%d\n", list_length(blocks));
 	p = h = blocks;
 	if (p) do {
 		block_t*	block = p->data;
