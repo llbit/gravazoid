@@ -121,7 +121,7 @@ void write_level(FILE* out)
 		block_t*	block = p->data;
 		p = p->succ;
 
-		fprintf(out, "%d, %d\n", block->x, block->z);
+		fprintf(out, "%d, %d, %d\n", block->type, block->x, block->z);
 	} while (p != h);
 }
 
