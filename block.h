@@ -19,6 +19,7 @@ struct block {
 	int		y;
 	int		z;
 	unsigned	type;
+	unsigned	color;
 };
 
 extern blocktype_t*	blocktype[NUM_BLOCK_TYPE];
