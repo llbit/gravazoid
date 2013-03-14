@@ -96,6 +96,7 @@ int main(int argc, char* argv[])
 	}
 
 	write_level(out);
+	free_blocks();
 	return 0;
 }
 
