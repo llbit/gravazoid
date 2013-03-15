@@ -85,13 +85,12 @@ struct brick {
 	uint8_t		color;
 	uint8_t		flags;
 } brick[MAXBRICK];
-int nbrick;
+
+list_t*	blocks;
 int bricks_left;
 
 #define BALLF_HELD		1
 #define BALLF_OUTSIDE		2
-
-#define BRICKF_LIVE		1
 
 struct ball {
 	double		x, y;
@@ -105,23 +104,6 @@ static void handle_event(SDL_Event* event);
 static void on_motion(SDL_MouseMotionEvent* motion);
 static void on_button(SDL_MouseButtonEvent* button);
 static void on_action();
-
-void add_brick(int x, int y, int color) {
-	if(nbrick == MAXBRICK) errx(1, "MAXBRICK");
-	brick[nbrick].x = x;
-	brick[nbrick].y = y;
-	brick[nbrick].color = color;
-	brick[nbrick].flags = BRICKF_LIVE;
-	nbrick++;
-}
-
-static int get_brick_y(struct brick* b)
-{
-	return (worldmap[b->y - 8][b->x - 8].sinkage +
-			worldmap[b->y + 8][b->x - 8].sinkage +
-			worldmap[b->y + 8][b->x + 8].sinkage +
-			worldmap[b->y - 8][b->x + 8].sinkage) / 4;
-}
 
 void videosetup(bool fullscreen) {
 	Uint32 flags = SDL_HWSURFACE | SDL_DOUBLEBUF | SDL_OPENGL;
@@ -201,19 +183,34 @@ void glsetup() {
 	ballquad = gluNewQuadric();
 }
 
+static void add_block(unsigned type, unsigned color, int x, int z)
+{
+	block_t*	block = malloc(sizeof(block_t));
+	block->type = type;
+	block->color = color;
+	block->x = x;
+	block->y = 100;
+	block->z = z;
+	list_add(&blocks, block);
+}
+
+/* Load the level file */
 void resetlevel(int restart) {
-	int x, y;
+	FILE*	in;
+	int	i;
+	int	nblock;
 
 	srand(0);
-	nbrick = 0;
-	for(y = 0; y < 12; y++) {
-		for(x = 0; x < 12; x++) {
-			if(x != 5 && x != 6 && y != 5 && y != 6) {
-				add_brick(x * 16 + 32, y * 16 + 32, rand() % 6);
-			}
-		}
+	free_list(&blocks);
+	in = fopen("level", "r");
+	fscanf(in, "%d", &nblock);
+	for (i = 0; i < nblock; ++i) {
+		int	type, x, z;
+		fscanf(in, "%d, %d, %d", &type, &x, &z);
+		add_block(type, rand() % 6, x, z);
 	}
-	bricks_left = nbrick;
+	fclose(in);
+	bricks_left = nblock;
 
 	if(restart) {
 		bigint_set(score, 0);
@@ -330,9 +327,10 @@ void draw_shards()
 }
 
 void drawscene(int with_membrane) {
-	int i, j;
-	GLfloat light[4];
-	block_t	block;
+	int	i, j;
+	GLfloat	light[4];
+	list_t*	p;
+	list_t*	h;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -366,24 +364,20 @@ void drawscene(int with_membrane) {
 	light[3] = 0;
 	glLightfv(GL_LIGHT0, GL_POSITION, light);
 	glEnable(GL_NORMALIZE);
-	for(i = 0; i < nbrick; i++) {
-		struct brick *b = &brick[i];
-		if(b->flags & BRICKF_LIVE) {
-			light[0] = colors[b->color][0] / 255.;
-			light[1] = colors[b->color][1] / 255.;
-			light[2] = colors[b->color][2] / 255.;
-			light[3] = 1;
-			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
+	p = h = blocks;
+	if (p) do {
+		block_t*	block = p->data;
+		p = p->succ;
 
-			int y = get_brick_y(b);
+		light[0] = colors[block->color][0] / 255.;
+		light[1] = colors[block->color][1] / 255.;
+		light[2] = colors[block->color][2] / 255.;
+		light[3] = 1;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 
-			block.x = b->x;
-			block.y = y;
-			block.z = b->y;
-			block.type = 0;
-			draw_block(&block);
-		}
-	}
+		draw_block(block);
+
+	} while (p != h);
 
 	draw_shards();
 
@@ -422,13 +416,14 @@ void drawscene(int with_membrane) {
 }
 
 void drawframe() {
-	int x, y, i;
-	uint8_t heightmap[WORLDH][WORLDW];
+	int	x, y;
+	//int	x, y, i;
+	//uint8_t	heightmap[WORLDH][WORLDW];
 	uint8_t *overlay = alloca((screen->w/2) * (screen->h/2) * 3);
 
 	glNormal3d(0, 1, 0);
 
-	if(!worldmap_valid) {
+	/*if(!worldmap_valid) {
 		glViewport(0, 0, WORLDW, WORLDH);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glMatrixMode(GL_PROJECTION);
@@ -469,7 +464,7 @@ void drawframe() {
 			}
 		}
 		worldmap_valid = 1;
-	}
+	}*/
 
 	if(softglow) {
 		glViewport(0, 0, screen->w / 2, screen->h / 2);
@@ -662,11 +657,11 @@ void add_shards(int x, int y, int z, int color)
 	}
 }
 
-void removebrick(struct brick *b) {
-	b->flags &= ~BRICKF_LIVE;
+static void remove_block(block_t* block) {
 	worldmap_valid = 0;
 
-	add_shards(b->x, get_brick_y(b), b->y, b->color);
+	add_shards(block->x, block->y, block->z, block->color);
+	list_remove_item(&blocks, block);
 
 	bricks_left--;
 	if(!bricks_left) {
@@ -679,38 +674,38 @@ void removebrick(struct brick *b) {
 	bigint_add(bonus, bonus, bonus);
 }
 
-int collide(struct ball *ba, double prevx, double prevy, struct brick *br) {
+int collide(struct ball *ba, double prevx, double prevy, block_t* block) {
 	int rm = 0;
 
-	if(ba->x >= br->x - 8 - WORLDW/2
-	&& ba->x <= br->x + 8 - WORLDW/2) {
+	if(ba->x >= block->x - 8 - WORLDW/2
+	&& ba->x <= block->x + 8 - WORLDW/2) {
 		if(ba->dy < 0
-		&& ba->y < (br->y + 8 - WORLDH/2)
-		&& prevy >= (br->y + 8 - WORLDH/2)) {
+		&& ba->y < (block->z + 8 - WORLDH/2)
+		&& prevy >= (block->z + 8 - WORLDH/2)) {
 			ba->dy = -ba->dy * 20;
 			rm = 1;
 		} else if(ba->dy > 0
-		&& ba->y > (br->y - 8 - WORLDH/2)
-		&& prevy <= (br->y - 8 - WORLDH/2)) {
+		&& ba->y > (block->z - 8 - WORLDH/2)
+		&& prevy <= (block->z - 8 - WORLDH/2)) {
 			ba->dy = -ba->dy * 20;
 			rm = 1;
 		}
 	}
-	if(ba->y >= br->y - 8 - WORLDH/2
-	&& ba->y <= br->y + 8 - WORLDH/2) {
+	if(ba->y >= block->z - 8 - WORLDH/2
+	&& ba->y <= block->z + 8 - WORLDH/2) {
 		if(ba->dx < 0
-		&& ba->x < (br->x + 8 - WORLDW/2)
-		&& prevx >= (br->x + 8 - WORLDW/2)) {
+		&& ba->x < (block->x + 8 - WORLDW/2)
+		&& prevx >= (block->x + 8 - WORLDW/2)) {
 			ba->dx = -ba->dx * 20;
 			rm = 1;
 		} else if(ba->dx > 0
-		&& ba->x > (br->x - 8 - WORLDW/2)
-		&& prevx <= (br->x - 8 - WORLDW/2)) {
+		&& ba->x > (block->x - 8 - WORLDW/2)
+		&& prevx <= (block->x - 8 - WORLDW/2)) {
 			ba->dx = -ba->dx * 20;
 			rm = 1;
 		}
 	}
-	if(rm) removebrick(br);
+	if(rm) remove_block(block);
 	return rm;
 }
 
@@ -761,7 +756,8 @@ void update_particles()
 }
 
 void physics() {
-	int i, j;
+	int	i;
+	//int	j;
 	double r, size;
 	double prevx, prevy;
 
@@ -780,7 +776,7 @@ void physics() {
 			ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
 			ball[i].dx = ball[i].dy = 0;
 		} else {
-			for(j = 0; j < nbrick; j++) {
+			/*for(j = 0; j < nbrick; j++) {
 				if(brick[j].flags & BRICKF_LIVE) {
 					double xdiff = (brick[j].x - WORLDW / 2) - ball[i].x;
 					double ydiff = (brick[j].y - WORLDH / 2) - ball[i].y;
@@ -790,7 +786,7 @@ void physics() {
 						ball[i].dy += GRAVITY * ydiff / dist2;
 					}
 				}
-			}
+			}*/
 			size = hypot(ball[i].dx, ball[i].dy);
 			if(size < .01) {
 				ball[i].dx += (rand() & 1)? 1 : -1;
@@ -838,14 +834,18 @@ void physics() {
 					}
 				}
 			} else {
-				for(j = 0; j < nbrick; j++) {
-					if(brick[j].flags & BRICKF_LIVE) {
-						if(collide(&ball[i], prevx, prevy, &brick[j])) {
-							sfx_hitbrick();
-							break;
-						}
+				list_t*	p;
+				list_t*	h;
+				p = h = blocks;
+				if (p) do {
+					block_t*	block = p->data;
+					p = p->succ;
+
+					if(collide(&ball[i], prevx, prevy, block)) {
+						sfx_hitbrick();
+						break;
 					}
-				}
+				} while (p != h);
 			}
 		}
 		memmove(ball[i].xhist, ball[i].xhist + 1, sizeof(float) * (NBLUR - 1));
