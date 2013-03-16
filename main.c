@@ -80,12 +80,6 @@ typedef struct shard {
 
 static list_t*	shards = NULL;
 
-struct brick {
-	int		x, y;
-	uint8_t		color;
-	uint8_t		flags;
-} brick[MAXBRICK];
-
 list_t*	blocks;
 int bricks_left;
 
@@ -186,7 +180,6 @@ void glsetup() {
 /* Load the level file */
 void resetlevel(int restart) {
 	FILE*	in;
-	int	i;
 
 	srand(0);
 	free_list(&blocks);
