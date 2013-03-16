@@ -37,7 +37,7 @@ void free_block(block_t** block);
 /* Load a single block type */
 blocktype_t* load_block(const char* filename);
 
-void draw_block(block_t* block);
+void draw_block(block_t* block, int wireframe);
 
 void draw_block_sides(block_t* block);
 

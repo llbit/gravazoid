@@ -350,16 +350,7 @@ void drawscene(int with_membrane) {
 		light[3] = 1;
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 
-		draw_block(block);
-
-		// draw wireframe
-		glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glDisable(GL_LIGHTING);
-		glDisable(GL_FOG);
-		glColor3f(0, 0, 0);
-		draw_block_sides(block);
-		glPopAttrib();
+		draw_block(block, 1);
 
 	} while (p != h);
 

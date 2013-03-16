@@ -129,7 +129,7 @@ void write_level(FILE* out)
 
 /* Parallel projection looking down on the x-y plane
  */
-static void top_view(float left, float right, float bottom, float top, float fNear, float fFar)
+static void top_view(float left, float right, float bottom, float top, float near, float far)
 {
 	float	mat[16];
 
@@ -144,9 +144,9 @@ static void top_view(float left, float right, float bottom, float top, float fNe
 	mat[13] = - (top+bottom) / (top-bottom);
 
 	mat[2] = 0;
-	mat[6] = - 2 / (fFar-fNear);
+	mat[6] = - 2 / (far-near);
 	mat[10] = 0;
-	mat[14] = - (fFar+fNear) / (fFar-fNear);
+	mat[14] = - (far+near) / (far-near);
 
 	mat[3] = 0;
 	mat[7] = 0;
@@ -202,7 +202,7 @@ void render()
 		ghost.z = cy;
 		ghost.type = tool;
 		ghost.color = 0;
-		draw_block(&ghost);
+		draw_block(&ghost, 0);
 		glPopAttrib();
 	}
 
@@ -212,7 +212,7 @@ void render()
 
 		glColor3f(1, 1, 1);
 
-		draw_block(block);
+		draw_block(block, 0);
 
 		p = p->succ;
 	} while (p != blocks);
