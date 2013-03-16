@@ -333,6 +333,11 @@ void handle_key(SDLKey key, int down)
 	case SDLK_q:
 		running = false;
 		break;
+	case SDLK_SPACE:
+		if (down) {
+			add_block(tool, cx, cy);
+		}
+		break;
 	case SDLK_d:
 		if (down) {
 			delete_closest_block(cx, cy);
