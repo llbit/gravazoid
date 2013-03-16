@@ -17,7 +17,7 @@
 struct vec;
 struct seg;
 
-static list_t*	blocks;
+static list_t*	blocks = NULL;
 
 static int	shift = 0;
 static float	cx = -1;
@@ -76,8 +76,8 @@ int main(int argc, char* argv[])
 	}
 
 	if (in) {
-		fprintf(stderr, "level loading not implemented yet!\n");
-		exit(1);
+		load_level(in, &blocks);
+		fclose(in);
 	}
 
 	if (!out) out = stdout;
@@ -170,7 +170,7 @@ void setup_video()
 	glViewport(0, 0, screen->w, screen->h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	top_view(0, WORLDW, 0, WORLDH, -1, 1);
+	top_view(-WORLDW/2, WORLDW/2, -WORLDH/2, WORLDH/2, -50, 50);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glDisable(GL_DEPTH_TEST);
@@ -243,9 +243,9 @@ void handle_event(SDL_Event* event)
 block_t* add_block(int type, float x, float y)
 {
 	block_t*	block = malloc(sizeof(block_t));
-	block->x = x + WORLDW/2;
-	block->y = 200;
-	block->z = y + WORLDH/2;
+	block->x = x;
+	block->y = 100;
+	block->z = y;
 	block->type = type;
 	list_add(&blocks, block);
 	return block;

@@ -1,6 +1,8 @@
 #include <SDL/SDL_opengl.h>
 #include <stdlib.h>
 
+#include <stdlib.h>
+
 #include "ark.h"
 #include "block.h"
 
@@ -24,6 +26,16 @@ void free_blocks()
 		free_edgelist(&blocktype[i]->edgelist);
 		blocktype[i] = NULL;
 	}
+}
+
+void free_block(block_t** block)
+{
+	if (block == NULL) return;
+
+	if (*block != NULL) {
+		free(*block);
+	}
+	*block = NULL;
 }
 
 blocktype_t* load_block(const char* filename)
@@ -118,5 +130,37 @@ void draw_block(block_t* block)
 	glPopAttrib();
 
 	glPopMatrix();
+}
+
+int load_level(FILE* in, list_t** blocks)
+{
+	int	nblock;
+	int	i;
+
+	// free blocks
+	while (*blocks) {
+		block_t*	block = list_remove(blocks);
+		free_block(&block);
+	}
+
+	fscanf(in, "%d", &nblock);
+	for (i = 0; i < nblock; ++i) {
+		int		type;
+		/*int		color;*/
+		int		x;
+		int		z;
+		block_t*	block;
+
+		fscanf(in, "%d, %d, %d", &type, &x, &z);
+		block = malloc(sizeof(block_t));
+		block->type = type;
+		block->color = 0;
+		block->x = x;
+		block->y = 100;
+		block->z = z;
+		list_add(blocks, block);
+	}
+
+	return nblock;
 }
 

@@ -183,34 +183,16 @@ void glsetup() {
 	ballquad = gluNewQuadric();
 }
 
-static void add_block(unsigned type, unsigned color, int x, int z)
-{
-	block_t*	block = malloc(sizeof(block_t));
-	block->type = type;
-	block->color = color;
-	block->x = x;
-	block->y = 100;
-	block->z = z;
-	list_add(&blocks, block);
-}
-
 /* Load the level file */
 void resetlevel(int restart) {
 	FILE*	in;
 	int	i;
-	int	nblock;
 
 	srand(0);
 	free_list(&blocks);
 	in = fopen("level", "r");
-	fscanf(in, "%d", &nblock);
-	for (i = 0; i < nblock; ++i) {
-		int	type, x, z;
-		fscanf(in, "%d, %d, %d", &type, &x, &z);
-		add_block(type, rand() % 6, x, z);
-	}
+	bricks_left = load_level(in, &blocks);
 	fclose(in);
-	bricks_left = nblock;
 
 	if(restart) {
 		bigint_set(score, 0);
