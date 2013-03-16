@@ -55,7 +55,7 @@ blocktype_t* load_block(const char* filename)
 	}
 }
 
-static void draw_sides(block_t* block)
+void draw_block_sides(block_t* block)
 {
 	int		i;
 	shape_t*	shape = blocktype[block->type]->shape;
@@ -118,16 +118,7 @@ void draw_block(block_t* block)
 	glEnd();
 
 	// draw sides
-	draw_sides(block);
-
-	// draw wireframe
-	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_FOG);
-	glColor3f(0, 0, 0);
-	draw_sides(block);
-	glPopAttrib();
+	draw_block_sides(block);
 
 	glPopMatrix();
 }

@@ -39,6 +39,8 @@ blocktype_t* load_block(const char* filename);
 
 void draw_block(block_t* block);
 
+void draw_block_sides(block_t* block);
+
 /**
  * @return number of blocks in level
  */

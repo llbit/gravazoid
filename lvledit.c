@@ -22,6 +22,7 @@ static list_t*	blocks = NULL;
 static int	shift = 0;
 static float	cx = -1;
 static float	cy = -1;
+static int	tool = 0;
 
 // I/O streams
 static FILE*	in = NULL;
@@ -184,12 +185,26 @@ void setup_video()
 
 void render()
 {
-	list_t*	p;
+	list_t*		p;
+	block_t		ghost;
 
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	if (cx != -1 && cy != -1) {
+		glPushAttrib(GL_POLYGON_BIT);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glColor3f(1, 0, 0);
+		ghost.x = cx;
+		ghost.y = 100;
+		ghost.z = cy;
+		ghost.type = tool;
+		ghost.color = 0;
+		draw_block(&ghost);
+		glPopAttrib();
+	}
 
 	p = blocks;
 	if (p) do {
@@ -255,8 +270,7 @@ block_t* add_block(int type, float x, float y)
  */
 void on_left_click(float x, float y)
 {
-	int type = 0;
-	add_block(type, x, y);
+	add_block(tool, x, y);
 }
 
 /* Right click handler
@@ -308,10 +322,10 @@ void handle_key(SDLKey key, int down)
 {
 	switch(key) {
 	case SDLK_1:
-		if (down) add_block(0, cx, cy);
+		tool = 0;
 		break;
 	case SDLK_2:
-		if (down) add_block(1, cx, cy);
+		tool = 1;
 		break;
 	case SDLK_LSHIFT:
 		shift = down;

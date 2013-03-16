@@ -352,6 +352,15 @@ void drawscene(int with_membrane) {
 
 		draw_block(block);
 
+		// draw wireframe
+		glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_FOG);
+		glColor3f(0, 0, 0);
+		draw_block_sides(block);
+		glPopAttrib();
+
 	} while (p != h);
 
 	draw_shards();
