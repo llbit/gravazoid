@@ -129,7 +129,7 @@ void write_level(FILE* out)
 
 /* Parallel projection looking down on the x-y plane
  */
-static void top_view(float left, float right, float bottom, float top, float near, float far)
+static void top_view(float left, float right, float bottom, float top, float fNear, float fFar)
 {
 	float	mat[16];
 
@@ -144,9 +144,9 @@ static void top_view(float left, float right, float bottom, float top, float nea
 	mat[13] = - (top+bottom) / (top-bottom);
 
 	mat[2] = 0;
-	mat[6] = - 2 / (far-near);
+	mat[6] = - 2 / (fFar-fNear);
 	mat[10] = 0;
-	mat[14] = - (far+near) / (far-near);
+	mat[14] = - (fFar+fNear) / (fFar-fNear);
 
 	mat[3] = 0;
 	mat[7] = 0;
