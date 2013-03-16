@@ -41,6 +41,7 @@
       <in>block.c</in>
       <in>block.h</in>
       <in>drums.h</in>
+      <in>lvledit.c</in>
       <in>main.c</in>
       <in>music_level.h</in>
       <in>render.c</in>
