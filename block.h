@@ -1,6 +1,7 @@
 #ifndef ARK_BLOCK_H
 #define ARK_BLOCK_H
 
+#include <stdint.h>
 #include <stdio.h>
 #include "cttf/shape.h"
 #include "cttf/triangulate.h"
@@ -45,5 +46,7 @@ void draw_block_sides(block_t* block);
  * @return number of blocks in level
  */
 int load_level(FILE* in, list_t** blocks);
+
+int load_ram_level(uint8_t *level, list_t **blocks);
 
 #endif

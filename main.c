@@ -1,5 +1,6 @@
 #define _XOPEN_SOURCE 500
 #include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
 #include <SDL/SDL.h>
@@ -12,6 +13,13 @@
 #include "block.h"
 #include "cttf/list.h"
 #include "sfx.h"
+
+#include "data_level1.h"
+
+uint8_t *leveltable[] = {
+	data_level1,
+	0
+};
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -64,6 +72,8 @@ static bigint_t* diff;
 static int score_up = 0;
 
 int worldmap_valid;
+
+int current_level = 1;
 
 typedef struct shard {
 	bool		visited;
@@ -179,18 +189,21 @@ void glsetup() {
 
 /* Load the level file */
 void resetlevel(int restart) {
-	FILE*	in;
-
 	srand(0);
-	free_list(&blocks);
-	in = fopen("level", "r");
-	bricks_left = load_level(in, &blocks);
-	fclose(in);
 
 	if(restart) {
 		bigint_set(score, 0);
 		lives = 5;
+		current_level = 1;
+	} else {
+		current_level++;
+		if(!leveltable[current_level - 1]) {
+			current_level = 1;
+		}
 	}
+
+	free_list(&blocks);
+	bricks_left = load_ram_level(leveltable[current_level - 1], &blocks);
 
 	nball = 1;
 	ball[0].flags = BALLF_HELD;

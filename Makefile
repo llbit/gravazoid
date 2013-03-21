@@ -34,8 +34,9 @@ clean:
 	rm -f render.o
 	rm -f ${GAME}
 	rm -f ${LVLEDIT}
+	rm -f data_level*.h
 
-main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h block.h
+main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h block.h data_level1.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 block.o: block.c block.h
@@ -53,3 +54,8 @@ sfx.o:	sfx.c sfx.h music_level.h drums.h
 lvledit.o:	lvledit.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h block.h
 	${CC} ${CFLAGS} -c $< -o $@
 
+convertlevel:	convertlevel.c
+		${CC} ${CFLAGS} -o $@ $<
+
+data_level%.h:	levels/level% convertlevel
+		./convertlevel $< >$@

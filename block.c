@@ -1,6 +1,5 @@
 #include <SDL/SDL_opengl.h>
-#include <stdlib.h>
-
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "ark.h"
@@ -167,3 +166,25 @@ int load_level(FILE* in, list_t** blocks)
 	return nblock;
 }
 
+int load_ram_level(uint8_t *src, list_t **blocks) {
+	int nblock, i;
+
+	// free blocks
+	while (*blocks) {
+		block_t *block = list_remove(blocks);
+		free_block(&block);
+	}
+
+	nblock = *src++;
+	for(i = 0; i < nblock; ++i) {
+		block_t *block = malloc(sizeof(block_t));
+		block->type = *src++;
+		block->color = *src++;
+		block->x = *src++;
+		block->y = 100;
+		block->z = *src++;
+		list_add(blocks, block);
+	}
+
+	return nblock;
+}

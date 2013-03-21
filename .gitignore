@@ -7,3 +7,5 @@
 /gmon.out
 /lvledit
 /lvledit.exe
+data_level*.h
+convertlevel
