@@ -30,8 +30,9 @@
 #define BALLRADIUS 4
 #define RIDGEHEIGHT 20
 
-#define BALLSPEED 2.1
-#define GRAVITY 0.009
+#define BALLSPEED_MIN 1.5
+#define BALLSPEED_INC 0.04
+#define GRAVITY 0.024
 
 #define MEMBRANESTEP 5
 #define NBLUR 96
@@ -42,7 +43,7 @@
 #define MAXBALL 16
 
 /* Draw the FPS counter */
-//#define DRAW_FPS
+#define DRAW_FPS
 
 #define BLOCKSIZE (25.f)
 

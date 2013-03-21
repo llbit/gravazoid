@@ -4,6 +4,7 @@
 
 #include "ark.h"
 #include "block.h"
+#include "render.h"
 
 #define DEPTH (15.f)
 
@@ -85,7 +86,7 @@ void draw_block(block_t* block, int wireframe)
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glTranslatef(block->x-WORLDW/2-BLOCKSIZE/2,
-			HEIGHTSCALE - SINKHEIGHTTOP * block->y,
+			HEIGHTSCALE - SINKHEIGHTTOP * (block->y + worldmap[block->z][block->x].sinkage),
 			block->z-WORLDH/2-BLOCKSIZE/2);
 	glScalef(BLOCKSIZE, BLOCKSIZE, BLOCKSIZE);
 
@@ -176,6 +177,7 @@ int load_ram_level(uint8_t *src, list_t **blocks) {
 	}
 
 	nblock = *src++;
+	nblock |= (*src++) << 8;
 	for(i = 0; i < nblock; ++i) {
 		block_t *block = malloc(sizeof(block_t));
 		block->type = *src++;

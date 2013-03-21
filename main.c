@@ -15,8 +15,10 @@
 #include "sfx.h"
 
 #include "data_level1.h"
+#include "data_invader.h"
 
 uint8_t *leveltable[] = {
+	data_invader,
 	data_level1,
 	0
 };
@@ -41,7 +43,7 @@ static int colors[][3] = {
 
 };
 
-static int ball_color[3] = { 0x33, 0x8C, 0x5C };
+static int ball_color[3] = { 0xf3, 0x1C, 0x2C };
 
 static void draw_hud();
 static void draw_utf_word(font_t* font, const char* word, float x, float y);
@@ -50,12 +52,15 @@ static int running = 1;
 SDL_Surface *screen;
 
 static int softglow = 0;
+static int draw_fps = 0;
 
 static int fps = 0;
 
 static double eye_angle = 0;
 static int key_dx = 0;
 static int paddle_vel = 0;
+static double ballspeed = 0;
+static int ridgesize = 10;
 
 int lives;
 int gameover = 1;
@@ -208,6 +213,7 @@ void resetlevel(int restart) {
 	nball = 1;
 	ball[0].flags = BALLF_HELD;
 	worldmap_valid = 0;
+	ballspeed = BALLSPEED_MIN;
 }
 
 /*void cross(GLdouble *dest, GLdouble *a, GLdouble *b) {
@@ -221,7 +227,7 @@ void ridge(double angstart, double angend) {
 
 	glNormal3d(0, 1, 0);
 	glBegin(GL_QUAD_STRIP);
-	for(i = 0; i < 64; i++) {
+	for(i = 0; i <= 64; i++) {
 		double angle = angstart + (angend - angstart) * i / 64;
 		glVertex3d(
 			OUTRADIUS * cos(angle * M_PI * 2 / 256),
@@ -234,7 +240,7 @@ void ridge(double angstart, double angend) {
 	}
 	glEnd();
 	glBegin(GL_QUAD_STRIP);
-	for(i = 0; i < 64; i++) {
+	for(i = 0; i <= 64; i++) {
 		double angle = angstart + (angend - angstart) * i / 64;
 		glNormal3d(cos(angle * M_PI * 2 / 256), 0, sin(angle * M_PI * 2 / 256));
 		glVertex3d(
@@ -319,6 +325,7 @@ void drawscene(int with_membrane) {
 	GLfloat	light[4];
 	list_t*	p;
 	list_t*	h;
+	double blueness;
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -341,7 +348,7 @@ void drawscene(int with_membrane) {
 	glFogf(GL_FOG_START, 200);
 	glFogf(GL_FOG_END, 600);
 
-	if(with_membrane) draw_membrane();
+	if(with_membrane) draw_membrane(softglow);
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
@@ -374,15 +381,21 @@ void drawscene(int with_membrane) {
 	light[2] = .2;
 	light[3] = 1;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
-	ridge(-eye_angle - 10 + 64, -eye_angle + 10 + 64);
+	ridge(-eye_angle - ridgesize + 64, -eye_angle + ridgesize + 64);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
-	light[0] = ball_color[0] / 255.0;
-	light[1] = ball_color[1] / 255.0;
-	light[2] = ball_color[2] / 255.0;
+	blueness = (ballspeed - BALLSPEED_MIN) * 1.0;
+	light[0] = ball_color[0] * (1 - blueness) / 255.0;
+	light[1] = ball_color[1] * (1 - blueness) / 255.0;
+	light[2] = ball_color[2] * (1 - blueness) / 255.0;
 	light[3] = 1;
+	if(light[0] < 0) light[0] = 0;
+	if(light[1] < 0) light[1] = 0;
+	if(light[2] < 0) light[2] = 0;
+	light[2] += blueness;
+	if(light[2] > 1) light[2] = 1;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, light);
 
 	for(i = 0; i < nball; i++) {
@@ -405,13 +418,13 @@ void drawscene(int with_membrane) {
 
 void drawframe() {
 	int	x, y;
-	//int	x, y, i;
-	//uint8_t	heightmap[WORLDH][WORLDW];
+	uint8_t	heightmap[WORLDH][WORLDW];
 	uint8_t *overlay = alloca((screen->w/2) * (screen->h/2) * 3);
+	list_t	*p, *h;
 
 	glNormal3d(0, 1, 0);
 
-	/*if(!worldmap_valid) {
+	if(!worldmap_valid) {
 		glViewport(0, 0, WORLDW, WORLDH);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glMatrixMode(GL_PROJECTION);
@@ -428,22 +441,23 @@ void drawframe() {
 		glBindTexture(GL_TEXTURE_2D, TEX_BLOB);
 		glColor3d(.2, .2, .2);
 		glBegin(GL_QUADS);
-		for(i = 0; i < nbrick; i++) {
-			if(brick[i].flags & BRICKF_LIVE) {
-				x = brick[i].x;
-				y = brick[i].y;
-				glTexCoord2d(0, 0);
-				glVertex3d(x - BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
-				glTexCoord2d(1, 0);
-				glVertex3d(x + BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
-				glTexCoord2d(1, 1);
-				glVertex3d(x + BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
-				glTexCoord2d(0, 1);
-				glVertex3d(x - BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
-			}
-		}
+		p = h = blocks;
+		if (p) do {
+			block_t *block = p->data;
+			p = p->succ;
+
+			x = block->x;
+			y = block->z;
+			glTexCoord2d(0, 0);
+			glVertex3d(x - BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
+			glTexCoord2d(1, 0);
+			glVertex3d(x + BLOBSIZE / 2, y - BLOBSIZE / 2, 0);
+			glTexCoord2d(1, 1);
+			glVertex3d(x + BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
+			glTexCoord2d(0, 1);
+			glVertex3d(x - BLOBSIZE / 2, y + BLOBSIZE / 2, 0);
+		} while (p != h);
 		glEnd();
-		//return;
 
 		glReadPixels(0, 0, WORLDW, WORLDH, GL_LUMINANCE, GL_UNSIGNED_BYTE, heightmap);
 		for(y = 0; y < WORLDH; y++) {
@@ -452,7 +466,7 @@ void drawframe() {
 			}
 		}
 		worldmap_valid = 1;
-	}*/
+	}
 
 	if(softglow) {
 		glViewport(0, 0, screen->w / 2, screen->h / 2);
@@ -544,9 +558,11 @@ static void draw_hud()
 	}
 
 #ifdef DRAW_FPS
-	snprintf(buf, sizeof(buf), "%3d fps", fps);
-	glColor3f(1.f, 1.f, 1.f);
-	draw_utf_word(font, buf, offset, 20 - offset - text_height);
+	if(draw_fps) {
+		snprintf(buf, sizeof(buf), "%3d fps", fps);
+		glColor3f(1.f, 1.f, 1.f);
+		draw_utf_word(font, buf, offset, 20 - offset - text_height);
+	}
 #endif
 	for (i = 0; i < lives; i++) {
 		draw_utf_word(font, "*", 20 - offset - (i+1) * line_width(font, "*"),
@@ -556,6 +572,8 @@ static void draw_hud()
 	if(gameover) {
 		float width = line_width(font, "game over");
 		draw_utf_word(font, "game over", 10-width/2, 10);
+		width = line_width(font, "by lft & llbit");
+		draw_utf_word(font, "by lft & llbit", 10 - width / 2, 17);
 	}
 
 	glPopAttrib();
@@ -601,6 +619,11 @@ void handle_key(SDLKey key, int down) {
 		case SDLK_g:
 			if(down) {
 				softglow ^= 1;
+			}
+			break;
+		case SDLK_f:
+			if(down) {
+				draw_fps ^= 1;
 			}
 			break;
 		default:
@@ -693,7 +716,10 @@ int collide(struct ball *ba, double prevx, double prevy, block_t* block) {
 			rm = 1;
 		}
 	}
-	if(rm) remove_block(block);
+	if(rm) {
+		remove_block(block);
+		ballspeed += BALLSPEED_INC;
+	}
 	return rm;
 }
 
@@ -748,10 +774,11 @@ void physics() {
 	//int	j;
 	double r, size;
 	double prevx, prevy;
+	list_t *p, *h;
 
 	update_particles();
 
-	paddle_vel = (paddle_vel * .9 + key_dx * MAX_PADDLE_VEL * .1);
+	paddle_vel = (paddle_vel * .8 + key_dx * MAX_PADDLE_VEL * .2);
 	if(gameover) paddle_vel = (paddle_vel * .9 + 10);
 
 	eye_angle += paddle_vel * .0018;
@@ -764,17 +791,18 @@ void physics() {
 			ball[i].y = (INRADIUS - BALLRADIUS) * sin((64 - eye_angle) * M_PI * 2 / 256);
 			ball[i].dx = ball[i].dy = 0;
 		} else {
-			/*for(j = 0; j < nbrick; j++) {
-				if(brick[j].flags & BRICKF_LIVE) {
-					double xdiff = (brick[j].x - WORLDW / 2) - ball[i].x;
-					double ydiff = (brick[j].y - WORLDH / 2) - ball[i].y;
-					double dist2 = xdiff * xdiff + ydiff * ydiff;
-					if(dist2) {
-						ball[i].dx += GRAVITY * xdiff / dist2;
-						ball[i].dy += GRAVITY * ydiff / dist2;
-					}
+			p = h = blocks;
+			if(p) do {
+				block_t *block = p->data;
+				double xdiff = (block->x - WORLDW / 2) - ball[i].x;
+				double ydiff = (block->z - WORLDH / 2) - ball[i].y;
+				double dist2 = xdiff * xdiff + ydiff * ydiff;
+				if(dist2) {
+					ball[i].dx += GRAVITY * xdiff / dist2;
+					ball[i].dy += GRAVITY * ydiff / dist2;
 				}
-			}*/
+				p = p->succ;
+			} while(p != h);
 			size = hypot(ball[i].dx, ball[i].dy);
 			if(size < .01) {
 				ball[i].dx += (rand() & 1)? 1 : -1;
@@ -785,8 +813,8 @@ void physics() {
 			}
 			prevx = ball[i].x;
 			prevy = ball[i].y;
-			ball[i].x += ball[i].dx * BALLSPEED;
-			ball[i].y += ball[i].dy * BALLSPEED;
+			ball[i].x += ball[i].dx * ballspeed;
+			ball[i].y += ball[i].dy * ballspeed;
 			r = hypot(ball[i].x, ball[i].y);
 			if(r > INRADIUS) {
 				bonus_reset();
@@ -795,6 +823,7 @@ void physics() {
 						ball[i].flags = BALLF_HELD;
 						sfx_gameover();
 						sfx_startsong(0);
+						ballspeed = BALLSPEED_MIN;
 						if(lives) {
 							lives--;
 						} else {
@@ -808,8 +837,8 @@ void physics() {
 					double angdiff = angle - paddle;
 					if(angdiff > M_PI) angdiff -= M_PI * 2;
 					if(angdiff < -M_PI) angdiff += M_PI * 2;
-					if(angdiff > M_PI / 8
-					|| angdiff < -M_PI / 8) {
+					if(angdiff > M_PI * ridgesize / 128
+					|| angdiff < -M_PI * ridgesize / 128) {
 						ball[i].flags |= BALLF_OUTSIDE;
 					} else {
 						double normx = ball[i].x;

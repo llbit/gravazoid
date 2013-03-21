@@ -21,7 +21,7 @@ void draw_membrane_part(int x0, int x1, int z0, int z1)
 
 }
 
-void draw_membrane()
+void draw_membrane(int softglow)
 {
 	int x, y;
 	int ox, oz;
@@ -32,7 +32,11 @@ void draw_membrane()
 
 	glDepthMask(GL_TRUE);
 	glDisable(GL_CULL_FACE);
-	glColor3ub(0x62, 0xBC, 0xE8);
+	if(softglow) {
+		glColor3ub(0x62, 0xBC, 0xE8);
+	} else {
+		glColor3ub(0x82, 0xdc, 0xff);
+	}
 
 	glBegin(GL_QUADS);
 

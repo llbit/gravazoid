@@ -36,7 +36,7 @@ clean:
 	rm -f ${LVLEDIT}
 	rm -f data_level*.h
 
-main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h block.h data_level1.h
+main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h block.h data_level1.h data_invader.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 block.o: block.c block.h
@@ -57,5 +57,5 @@ lvledit.o:	lvledit.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/
 convertlevel:	convertlevel.c
 		${CC} ${CFLAGS} -o $@ $<
 
-data_level%.h:	levels/level% convertlevel
+data_%.h:	levels/% convertlevel
 		./convertlevel $< >$@
