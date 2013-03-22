@@ -572,8 +572,10 @@ static void draw_hud()
 	if(gameover) {
 		float width = line_width(font, "game over");
 		draw_utf_word(font, "game over", 10-width/2, 10);
+		width = line_width(font, "GRAVAZOID");
+		draw_utf_word(font, "GRAVAZOID", 10 - width / 2, 17);
 		width = line_width(font, "by lft & llbit");
-		draw_utf_word(font, "by lft & llbit", 10 - width / 2, 17);
+		draw_utf_word(font, "by lft & llbit", 10 - width / 2, 16);
 	}
 
 	glPopAttrib();

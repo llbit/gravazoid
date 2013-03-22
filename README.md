@@ -1,5 +1,5 @@
-Arkanoid
-========
+Gravazoid
+=========
 
 A twisted arkanoid clone by Jesper Öqvist and Linus Åkesson.
 
