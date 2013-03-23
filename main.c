@@ -13,9 +13,11 @@
 #include "block.h"
 #include "cttf/list.h"
 #include "sfx.h"
+#include "memfile.h"
 
 #include "data_level1.h"
 #include "data_invader.h"
+#include "pusselbit.h"
 
 uint8_t *leveltable[] = {
 	data_invader,
@@ -29,7 +31,7 @@ uint8_t *leveltable[] = {
 
 static void errx(int exitval, const char* msg)
 {
-	fprintf(stderr, "%s", msg);
+	fprintf(stderr, "%s\n", msg);
 	exit(exitval);
 }
 
@@ -876,7 +878,14 @@ void physics() {
 
 void load_resources()
 {
-	font = load_font("Pusselbit.ttf", 3);
+	FILE*	pusselbit;
+
+	pusselbit = to_memfile(data_pusselbit, sizeof(data_pusselbit));
+	font = load_font_file(pusselbit, 3);
+	if (!font) {
+		errx(1, "Failed to load font!");
+	}
+
 	load_blocks(); /* load all block types */
 	score = new_bigint(0);
 	bonus = new_bigint(1);

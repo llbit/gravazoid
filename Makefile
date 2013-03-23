@@ -20,7 +20,7 @@ all:	cttf ${GAME} ${LVLEDIT}
 cttf:
 	$(MAKE) -C cttf libcttf.a vex
 
-${GAME}:	main.o render.o bigint.o sfx.o block.o
+${GAME}:	main.o render.o bigint.o sfx.o block.o memfile.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
 ${LVLEDIT}:	lvledit.o render.o sfx.o block.o
@@ -35,8 +35,10 @@ clean:
 	rm -f ${GAME}
 	rm -f ${LVLEDIT}
 	rm -f data_level*.h
+	rm -f pusselbit.h
 
-main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/shape.h block.h data_level1.h data_invader.h
+main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h \
+	cttf/shape.h block.h data_level1.h data_invader.h pusselbit.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 block.o: block.c block.h
@@ -48,6 +50,9 @@ bigint.o: bigint.c bigint.h
 render.o: render.c render.h block.h
 	${CC} ${CFLAGS} -c $< -o $@
 
+memfile.o: memfile.c memfile.h
+	${CC} ${CFLAGS} -c $< -o $@
+
 sfx.o:	sfx.c sfx.h music_level.h drums.h
 	${CC} ${CFLAGS} -c $< -o $@
 
@@ -57,5 +62,11 @@ lvledit.o:	lvledit.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h cttf/
 convertlevel:	convertlevel.c
 		${CC} ${CFLAGS} -o $@ $<
 
+toheader:	toheader.c
+		${CC} ${CFLAGS} -o $@ $<
+
 data_%.h:	levels/% convertlevel
 		./convertlevel $< >$@
+
+pusselbit.h: toheader
+		./toheader Pusselbit.ttf pusselbit >pusselbit.h

@@ -7,5 +7,7 @@
 /gmon.out
 /lvledit
 /lvledit.exe
-data_*.h
-convertlevel
+/data_*.h
+/convertlevel
+/toheader
+/pusselbit.h
