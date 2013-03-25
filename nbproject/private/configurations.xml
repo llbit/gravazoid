@@ -10,7 +10,6 @@
         <in>3dtest.c</in>
         <in>bstree.c</in>
         <in>bstree.h</in>
-        <in>cttftext.c</in>
         <in>ftest.c</in>
         <in>list.c</in>
         <in>list.h</in>
@@ -23,6 +22,7 @@
         <in>shape.h</in>
         <in>stack.c</in>
         <in>stack.h</in>
+        <in>text.c</in>
         <in>text.h</in>
         <in>treeset.c</in>
         <in>treeset.h</in>
@@ -35,19 +35,29 @@
         <in>vector.h</in>
         <in>vex.c</in>
       </df>
+      <df name="levels">
+      </df>
       <in>ark.h</in>
       <in>bigint.c</in>
       <in>bigint.h</in>
       <in>block.c</in>
       <in>block.h</in>
+      <in>convertlevel.c</in>
+      <in>data_invader.h</in>
+      <in>data_level1.h</in>
       <in>drums.h</in>
+      <in>err.h</in>
       <in>lvledit.c</in>
       <in>main.c</in>
+      <in>memfile.c</in>
+      <in>memfile.h</in>
       <in>music_level.h</in>
+      <in>pusselbit.h</in>
       <in>render.c</in>
       <in>render.h</in>
       <in>sfx.c</in>
       <in>sfx.h</in>
+      <in>toheader.c</in>
       <in>triangulate.c</in>
       <in>triangulate.h</in>
     </df>
