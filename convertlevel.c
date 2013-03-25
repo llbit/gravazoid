@@ -4,6 +4,19 @@
 #include <stdlib.h>
 #include <strings.h>
 
+#ifdef __WIN32__
+/* index replacement for win32 */
+static char* index(const char* str, int c) {
+	char*	p = str;
+	while (1) {
+		if (*p == c) return p;
+		if (*p == '\0') break;
+		p += 1;
+	}
+	return NULL;
+}
+#endif
+
 int main(int argc, char **argv) {
 	FILE *f;
 	int nblock, btype, x, z, width, height;
