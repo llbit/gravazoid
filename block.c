@@ -5,6 +5,9 @@
 #include "ark.h"
 #include "block.h"
 #include "render.h"
+#include "memfile.h"
+
+#include "data_blocks.h"
 
 #define DEPTH (15.f)
 
@@ -12,11 +15,8 @@ blocktype_t*	blocktype[NUM_BLOCK_TYPE];
 
 void load_blocks()
 {
-	for (int i = 0; i < NUM_BLOCK_TYPE; ++i) {
-		char filename[128];
-		snprintf(filename, 128, "blocks/block%d.shape", i);
-		blocktype[i] = load_block(filename);
-	}
+	blocktype[0] = load_block(mem_to_file(data_block0, sizeof(data_block0)));
+	blocktype[1] = load_block(mem_to_file(data_block1, sizeof(data_block1)));
 }
 
 void free_blocks()
@@ -38,14 +38,12 @@ void free_block(block_t** block)
 	*block = NULL;
 }
 
-blocktype_t* load_block(const char* filename)
+blocktype_t* load_block(FILE* fp)
 {
-	FILE*		file = fopen(filename, "rb");
-
-	if (file) {
+	if (fp) {
 		blocktype_t*	block = malloc(sizeof(blocktype_t));
-		block->shape = load_shape(file);
-		fclose(file);
+		block->shape = load_shape(fp);
+		fclose(fp);
 		if (block->shape) {
 			block->edgelist = triangulate(block->shape);
 		}

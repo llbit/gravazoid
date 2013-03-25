@@ -23,7 +23,7 @@ cttf:
 ${GAME}:	main.o render.o bigint.o sfx.o block.o memfile.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
-${LVLEDIT}:	lvledit.o render.o sfx.o block.o
+${LVLEDIT}:	lvledit.o render.o sfx.o block.o memfile.o
 	${LD} -o $@ $^ ${LDFLAGS}
 
 clean:
@@ -41,7 +41,7 @@ main.o:	main.c ark.h cttf/list.h bigint.h cttf/text.h render.h sfx.h \
 	cttf/shape.h block.h data_level1.h data_invader.h pusselbit.h
 	${CC} ${CFLAGS} -c $< -o $@
 
-block.o: block.c block.h
+block.o: block.c block.h data_blocks.h
 	${CC} ${CFLAGS} -c $< -o $@
 
 bigint.o: bigint.c bigint.h
@@ -70,3 +70,7 @@ data_%.h:	levels/% convertlevel
 
 pusselbit.h: toheader
 		./toheader Pusselbit.ttf pusselbit >pusselbit.h
+
+data_blocks.h: toheader
+		./toheader blocks/block0.shape block0 >data_blocks.h
+		./toheader blocks/block1.shape block1 >>data_blocks.h
