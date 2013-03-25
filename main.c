@@ -6,6 +6,8 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_opengl.h>
 
+#include "err.h"
+
 #include "ark.h"
 #include "render.h"
 #include "cttf/text.h"
@@ -28,12 +30,6 @@ uint8_t *leveltable[] = {
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
 #endif
-
-static void errx(int exitval, const char* msg)
-{
-	fprintf(stderr, "%s\n", msg);
-	exit(exitval);
-}
 
 static int colors[][3] = {
 	{0x65, 0x9D, 0xFD}, // light blue
@@ -880,7 +876,7 @@ void load_resources()
 {
 	FILE*	pusselbit;
 
-	pusselbit = to_memfile(data_pusselbit, sizeof(data_pusselbit));
+	pusselbit = mem_to_file(data_pusselbit, sizeof(data_pusselbit));
 	font = load_font_file(pusselbit, 3);
 	if (!font) {
 		errx(1, "Failed to load font!");
