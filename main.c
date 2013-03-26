@@ -303,7 +303,9 @@ void draw_shards()
 		glTranslatef(px, py, pz);
 		glRotatef(180+eye_angle * 360 / 256.f, 0, 1, 0);
 		glBegin(GL_QUADS);
+		glNormal3d(0, 1, 0);
 		glTexCoord2d(0, 1);
+		glVertex3d(-SHARDW, -SHARDH, 0);
 		glVertex3d(-SHARDW, -SHARDH, 0);
 		glTexCoord2d(0, 0);
 		glVertex3d(-SHARDW, +SHARDH, 0);
@@ -671,7 +673,7 @@ void add_shards(int x, int y, int z, int color)
 static void remove_block(block_t* block) {
 	worldmap_valid = 0;
 
-	add_shards(block->x, block->y, block->z, block->color);
+	add_shards(block->x, block->y+150, block->z, block->color);
 	list_remove_item(&blocks, block);
 
 	bricks_left--;
